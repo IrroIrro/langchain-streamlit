@@ -132,21 +132,11 @@ if uploaded_file is not None:
         # Run chain
         llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.8)
         
-        qa_chain = RetrievalQA.from_chain_type(llm,
-                                           retriever=vectorstore.as_retriever(),
-                                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                                           return_source_documents=True)
-        
-        result = qa_chain({"query": question})
-    
-        st.write(f"Answer: {result['result']}")
-
+# Handle user input and conversation history
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
-
 if "past" not in st.session_state:
     st.session_state["past"] = []
-
 
 def get_text():
     input_text = st.text_input("You: ", "Hello, how are you?", key="input")
@@ -155,10 +145,24 @@ def get_text():
 user_input = get_text()
 
 if user_input:
+    # Run the conversation chain with user input
     output = chain.run(input=user_input)
 
+    # Append user input and generated output to session state
     st.session_state.past.append(user_input)
     st.session_state.generated.append(output)
+
+# Display conversation history
+if st.session_state["generated"]:
+    for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+        message(st.session_state["generated"][i], key=str(i))
+        message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
+
+# Handle the question input for the Question Answering part
+question = st.text_input("Enter your question:", "Who are the main 3 findings?")
+if question:
+    result = qa_chain({"query": question})
+    st.write(f"Answer: {result['result']}")
 
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
