@@ -72,6 +72,8 @@ if uploaded_file is not None:
                 embedding=OpenAIEmbeddings(),
                 persist_directory=persist_directory
             )
+    except:
+        print(f"Error occurred: {e}")
 
 question = st.text_input("Enter your question:", "Who are the main 3 findings?")
 if question:
