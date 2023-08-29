@@ -44,6 +44,11 @@ def get_text():
     input_text = st.text_input("You: ", "Hello, how are you?", key="input")
     return input_text
 
+# Define the get_text function
+def get_text(key="input"):
+    input_text = st.text_input("You: ", "Hello, how are you?", key=key)
+    return input_text
+    
 # Initialize session state keys if they don't exist
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
@@ -122,14 +127,15 @@ if uploaded_file is not None:
             pickle.dump(vectorstore, f)
 
     # Get user input
-    user_input = get_text()
+    user_input_before_upload = get_text(key="input_before_upload")
+    user_input_after_upload = get_text(key="input_after_upload")
     
-    if user_input:
+    if user_input_after_upload:
         # Run the conversation chain with user input
-        output = chain.run(input=user_input)
+        output = chain.run(input=user_input_after_upload)
 
         # Append user input and generated output to session state
-        st.session_state.past.append(user_input)
+        st.session_state.past.append(user_input_after_upload)
         st.session_state.generated.append(output)
 
     # Display conversation history
