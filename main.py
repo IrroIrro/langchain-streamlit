@@ -94,7 +94,7 @@ if uploaded_file is not None:
         
         splits = text_splitter.split_documents(pages)
 
-        vectorstore = FAISS.from_texts(
+        vectorstore = faiss.from_texts(
             texts=splits,
             embedding=OpenAIEmbeddings()
         )
