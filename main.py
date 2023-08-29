@@ -118,19 +118,27 @@ if uploaded_file is not None:
         with open("vectorstore.pkl", "wb") as f:
             pickle.dump(vectorstore, f)
             
-    qa_chain = RetrievalQA.from_chain_type(llm,
-                           retriever=vectorstore.as_retriever(),
-                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                           return_source_documents=True)
+# Create the QA chain after vectorstore is available
+qa_chain = RetrievalQA.from_chain_type(llm,
+                   retriever=vectorstore.as_retriever(),
+                   chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                   return_source_documents=True)
 
-    # Handle the question input for the Question Answering part
-    question = st.text_input("Enter your question about the document:", key="question_input")
-    if question:
-        result = qa_chain({"query": question})
-        st.write(f"Answer: {result['result']}")
+# Display conversation history for QA
+if "generated_qa" not in st.session_state:
+    st.session_state["generated_qa"] = []
+if "past_qa" not in st.session_state:
+    st.session_state["past_qa"] = []
 
-    # Display conversation history for QA
-    if st.session_state["generated"]:
-        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-            message(st.session_state["generated"][i], key=f"{i}_generated_qa")
-            message(st.session_state["past"][i], is_user=True, key=f"{i}_user_qa")
+# Handle the question input for the Question Answering part
+question = st.text_input("Enter your question about the document:", key="question_input")
+if question:
+    result = qa_chain({"query": question})
+    st.write(f"Answer: {result['result']}")
+
+# Display conversation history for QA
+if st.session_state["generated_qa"]:
+    for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
+        message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+        message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+
