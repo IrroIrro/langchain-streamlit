@@ -1,11 +1,12 @@
 """Python file to serve as the frontend"""
-import PyPDF2
-
 import streamlit as st
-from streamlit_chat import message
-
 from langchain.chains import ConversationChain
-from langchain.llms import OpenAI
+from langchain.llms import OpenAI, OpenAIEmbeddings, ChatOpenAI
+from langchain.chains.retrieval import RetrievalQA
+from langchain.store import Chroma
+from langchain.split import CharacterTextSplitter
+from langchain.templates import PromptTemplate
+import PyPDF2
 
 def read_pdf(file):
     pdf_reader = PyPDF2.PdfReader(file)
@@ -19,28 +20,60 @@ def load_chain():
     llm = OpenAI(temperature=0.2)
     chain = ConversationChain(llm=llm)
     return chain
-    
-def process_paragraphs(paragraphs):
-    results = []
-    for paragraph in paragraphs:
-        # Replace this with actual processing, e.g., model inference with LangChain.
-        results.append(paragraph[::-1])
-    return results
 
+# Load Chain
 chain = load_chain()
-st.set_page_config(page_title="LangChain Demo", page_icon=":robot:")
-st.header("LangChain Demo")
 
-# Upload and Read PDF
+# Set Streamlit Config
+st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
+st.header("ChatGPT for BERA")
+
+# PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+
 if uploaded_file:
     pdf_text = read_pdf(uploaded_file)
     st.text_area("Content of the PDF:", pdf_text, height=300)
 
-    paragraphs = [para for para in pdf_text.split(". \n") if para]
-    processed_results = process_paragraphs(paragraphs)
-    for result in processed_results:
-        st.write(result)
+    # Split PDF into chunks
+    pages = [pdf_text]
+    text_splitter = CharacterTextSplitter(        
+        separator="\n\n",
+        chunk_size=2000,
+        chunk_overlap=500,
+        length_function=len,
+    )
+    splits = text_splitter.split_documents(pages)
+
+    vectorstore = Chroma.from_documents(
+        documents=splits,
+        embedding=OpenAIEmbeddings(),
+        persist_directory=persist_directory
+    )
+
+    # Question Answering
+    question = st.text_input("Enter your question:", "Who are the main 3 findings?")
+    if question:
+        template = """Use the following pieces of context to answer the question at the end. 
+        If you don't know the answer, just say that you don't know, don't try to make up an answer. 
+        Use five sentences maximum and provide the most accurate and precise answer.
+        {context}
+
+        Question: {question}
+        Creative Answer:"""
+        
+        QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
+
+        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.8)
+        qa_chain = RetrievalQA.from_chain_type(
+            llm,
+            retriever=vectorstore.as_retriever(),
+            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+            return_source_documents=True
+        )
+        result = qa_chain({"query": question})
+
+        st.write(f"Answer: {result['result']}")
 
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
