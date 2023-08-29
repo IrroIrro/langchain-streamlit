@@ -40,32 +40,27 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
 
-# @st.cache(allow_output_mutation=True)
-# def process_pdf(file):
-    
-#     # Create a virtual path for the file
-#     virtual_directory = "/virtual_upload_directory"
-#     unique_filename = f"{uuid.uuid4()}_{file.name}"
-#     file_path = os.path.join(virtual_directory, unique_filename)
-    
-#     pages = read_pdf(uploaded_file, file_path)
-
-#     text_splitter = CharacterTextSplitter(        
-#         separator="\n\n",
-#         chunk_size=2000,
-#         chunk_overlap=500,
-#         length_function=len,
-#     )
-#     splits = text_splitter.split_documents(pages)
-
-#     with open("vectorstore.pkl", "wb") as f:
-#         pickle.dump(vectorstore, f)
-
 # Load Chain
 chain = load_chain()
 
 # Load QA chain
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
+
+template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
+        Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
+        If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
+        When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
+        If the source is unknown, indicate with "No Source".
+        
+        Context:
+        {context}
+        
+        Question: 
+        {question}
+        
+        Desired Answer:"""
+        
+QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
 # Set Streamlit Config
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
