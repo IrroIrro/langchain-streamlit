@@ -13,7 +13,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.prompts import PromptTemplate
-import PyPDF2
+from langchain.document_loaders import PyPDFLoader
 
 def read_pdf(file):
     loader = PyPDFLoader(file)
