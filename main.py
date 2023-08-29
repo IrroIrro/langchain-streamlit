@@ -94,11 +94,15 @@ if uploaded_file is not None:
             length_function=len,
         )
         
-        splits = text_splitter.split_documents(pages)
+        chunk_texts = [chunk.page_content for chunk in splits]
 
+        # Embedding (Openai methods)
+        embeddings = OpenAIEmbeddings()
+        
+        # Store the chunks part in db (vector)
         vectorstore = FAISS.from_texts(
-            texts=splits,
-            embedding=OpenAIEmbeddings()
+            texts=chunk_texts,  # Pass the extracted text content
+            embedding=embeddings
         )
         
         # Store vectorstore to pickle file
