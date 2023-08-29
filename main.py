@@ -4,10 +4,13 @@ from langchain.chains import ConversationChain
 from langchain.llms import OpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chat_models import ChatOpenAI
-from langchain.chains.retrieval import RetrievalQA
-from langchain.store import Chroma
-from langchain.split import CharacterTextSplitter
-from langchain.templates import PromptTemplate
+from langchain.chains import RetrievalQA
+from langchain.vectorstores import Chroma
+from langchain.llms import OpenAI
+from langchain.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.prompts import PromptTemplate
 import PyPDF2
 
 def read_pdf(file):
