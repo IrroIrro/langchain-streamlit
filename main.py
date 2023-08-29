@@ -66,6 +66,18 @@ QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], templa
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
 
+# Initialize session state keys if they don't exist
+if "generated" not in st.session_state:
+    st.session_state["generated"] = []
+if "past" not in st.session_state:
+    st.session_state["past"] = []
+
+def get_text():
+    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
+    return input_text
+
+user_input = get_text()
+
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
@@ -114,18 +126,6 @@ qa_chain = RetrievalQA.from_chain_type(llm,
                                retriever=vectorstore.as_retriever(),
                                chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                                return_source_documents=True)
-
-# Handle user input and conversation history
-if "generated" not in st.session_state:
-    st.session_state["generated"] = []
-if "past" not in st.session_state:
-    st.session_state["past"] = []
-
-def get_text():
-    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
-    return input_text
-
-user_input = get_text()
 
 if user_input:
     # Run the conversation chain with user input
