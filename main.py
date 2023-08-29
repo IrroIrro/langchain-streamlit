@@ -73,7 +73,7 @@ if uploaded_file is not None:
                 persist_directory=persist_directory
             )
         
-    question = st.text_input("Enter your question:", "Who are the main 3 findings?")
+question = st.text_input("Enter your question:", "Who are the main 3 findings?")
     if question:
         template = """Use the following pieces of context to answer the question at the end. 
         If you don't know the answer, just say that you don't know, don't try to make up an answer. 
