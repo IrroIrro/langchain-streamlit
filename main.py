@@ -17,6 +17,7 @@ from langchain.document_loaders import PyPDFLoader
 import os
 import uuid
 from collections import namedtuple
+import PyPDF2
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
