@@ -18,6 +18,7 @@ import os
 import uuid
 from collections import namedtuple
 import PyPDF2
+import pickle
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
