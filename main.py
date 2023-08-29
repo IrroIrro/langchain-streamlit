@@ -118,7 +118,7 @@ if uploaded_file is not None:
         with open("vectorstore.pkl", "wb") as f:
             pickle.dump(vectorstore, f)
             
-    qa_chain = RetrievalQA.from_chain_type(llm_qa,
+    qa_chain = RetrievalQA.from_chain_type(llm,
                            retriever=vectorstore.as_retriever(),
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)
