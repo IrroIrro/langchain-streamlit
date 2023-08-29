@@ -40,26 +40,26 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
 
-@st.cache(allow_output_mutation=True)
-def process_pdf(file):
+# @st.cache(allow_output_mutation=True)
+# def process_pdf(file):
     
-    # Create a virtual path for the file
-    virtual_directory = "/virtual_upload_directory"
-    unique_filename = f"{uuid.uuid4()}_{file.name}"
-    file_path = os.path.join(virtual_directory, unique_filename)
+#     # Create a virtual path for the file
+#     virtual_directory = "/virtual_upload_directory"
+#     unique_filename = f"{uuid.uuid4()}_{file.name}"
+#     file_path = os.path.join(virtual_directory, unique_filename)
     
-    pages = read_pdf(uploaded_file, file_path)
+#     pages = read_pdf(uploaded_file, file_path)
 
-    text_splitter = CharacterTextSplitter(        
-        separator="\n\n",
-        chunk_size=2000,
-        chunk_overlap=500,
-        length_function=len,
-    )
-    splits = text_splitter.split_documents(pages)
+#     text_splitter = CharacterTextSplitter(        
+#         separator="\n\n",
+#         chunk_size=2000,
+#         chunk_overlap=500,
+#         length_function=len,
+#     )
+#     splits = text_splitter.split_documents(pages)
 
-    with open("vectorstore.pkl", "wb") as f:
-        pickle.dump(vectorstore, f)
+#     with open("vectorstore.pkl", "wb") as f:
+#         pickle.dump(vectorstore, f)
 
 # Load Chain
 chain = load_chain()
@@ -94,6 +94,8 @@ if uploaded_file is not None:
             length_function=len,
         )
         
+        splits = text_splitter.split_documents(pages)
+
         chunk_texts = [chunk.page_content for chunk in splits]
 
         # Embedding (Openai methods)
