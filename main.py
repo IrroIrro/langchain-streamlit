@@ -69,7 +69,7 @@ st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
 
 # PDF Upload and Read
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key="pdf_upload")
 
 # Check if a file has been uploaded
 if uploaded_file is not None:
@@ -136,6 +136,7 @@ if uploaded_file is not None:
                                    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                                    return_source_documents=True)
         
+
 # Handle user input and conversation history
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
@@ -159,16 +160,17 @@ if user_input:
 # Display conversation history
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=str(i))
-        message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
+        message(st.session_state["generated"][i], key=f"{i}_generated")
+        message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
 
 # Handle the question input for the Question Answering part
 question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
 if question:
+    # Run the QA chain with the question
     result = qa_chain({"query": question})
     st.write(f"Answer: {result['result']}")
 
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=str(i))
-        message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
+        message(st.session_state["generated"][i], key=f"{i}_generated")
+        message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
