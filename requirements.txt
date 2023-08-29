@@ -2,4 +2,4 @@ langchain
 openai
 streamlit
 streamlit-chat
-PyPDF2
+pypdf
