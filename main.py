@@ -41,7 +41,7 @@ def load_chain():
     return chain
 
 def get_text():
-    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
+    input_text = st.text_input("You: ", "Ask a question about the document?", key="input")
     return input_text
 
 # Define the get_text function
@@ -128,20 +128,6 @@ if uploaded_file is not None:
         st.session_state["generated"] = []
     if "past" not in st.session_state:
         st.session_state["past"] = []
-
-    def get_text():
-        input_text = st.text_input("Ask a question about the document:", key="input")
-        return input_text
-
-    user_input = get_text()
-
-    if user_input:
-        # Run the conversation chain with user input
-        output = chain.run(input=user_input)
-
-        # Append user input and generated output to session state
-        st.session_state.past.append(user_input)
-        st.session_state.generated.append(output)
 
     # Display conversation history
     if st.session_state["generated"]:
