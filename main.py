@@ -20,6 +20,7 @@ from collections import namedtuple
 import PyPDF2
 import pickle
 from langchain.vectorstores import FAISS
+import tiktoken
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
