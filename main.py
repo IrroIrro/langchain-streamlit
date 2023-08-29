@@ -40,6 +40,16 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
 
+def get_text():
+    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
+    return input_text
+
+# Initialize session state keys if they don't exist
+if "generated" not in st.session_state:
+    st.session_state["generated"] = []
+if "past" not in st.session_state:
+    st.session_state["past"] = []
+
 # Load Chain
 chain = load_chain()
 
@@ -65,16 +75,6 @@ QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], templa
 # Set Streamlit Config
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
-
-# Initialize session state keys if they don't exist
-if "generated" not in st.session_state:
-    st.session_state["generated"] = []
-if "past" not in st.session_state:
-    st.session_state["past"] = []
-
-def get_text():
-    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
-    return input_text
 
 user_input = get_text()
 
@@ -120,32 +120,29 @@ if uploaded_file is not None:
         # Store vectorstore to pickle file
         with open("vectorstore.pkl", "wb") as f:
             pickle.dump(vectorstore, f)
-            
-# Load QA chain using the existing llm instance
-qa_chain = RetrievalQA.from_chain_type(llm,
-                               retriever=vectorstore.as_retriever(),
-                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                               return_source_documents=True)
 
-if user_input:
-    # Run the conversation chain with user input
-    output = chain.run(input=user_input)
+    # Get user input
+    user_input = get_text()
+    
+    if user_input:
+        # Run the conversation chain with user input
+        output = chain.run(input=user_input)
 
-    # Append user input and generated output to session state
-    st.session_state.past.append(user_input)
-    st.session_state.generated.append(output)
+        # Append user input and generated output to session state
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(output)
 
-# Display conversation history
-if st.session_state["generated"]:
-    for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=f"{i}_generated")
-        message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
+    # Display conversation history
+    if st.session_state["generated"]:
+        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
 
-# Handle the question input for the Question Answering part
-question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
-if question:
-    result = qa_chain({"query": question})
-    st.write(f"Answer: {result['result']}")
+    # Handle the question input for the Question Answering part
+    question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
+    if question:
+        result = qa_chain({"query": question})
+        st.write(f"Answer: {result['result']}")
 
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
