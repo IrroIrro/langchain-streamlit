@@ -4,4 +4,4 @@ streamlit
 streamlit-chat
 pypdf
 PyPDF2
-chromadb
+pickle
