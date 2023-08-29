@@ -159,7 +159,7 @@ if st.session_state["generated"]:
         message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
 
 # Handle the question input for the Question Answering part
-question = st.text_input("Enter your question:", "Who are the main 3 findings?")
+question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
 if question:
     result = qa_chain({"query": question})
     st.write(f"Answer: {result['result']}")
