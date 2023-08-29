@@ -107,11 +107,6 @@ if uploaded_file is not None:
         texts=chunk_texts,  # Pass the extracted text content
         embedding=embeddings
     )
-    
-    # Store vectorstore to a unique pickle file
-    pickle_filename = f"vectorstore_{uuid.uuid4()}.pkl"
-    with open(pickle_filename, "wb") as f:
-        pickle.dump(vectorstore, f)
             
     # Create the QA chain after vectorstore is available
     qa_chain = RetrievalQA.from_chain_type(llm,
