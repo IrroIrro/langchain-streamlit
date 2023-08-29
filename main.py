@@ -1,7 +1,9 @@
 """Python file to serve as the frontend"""
 import streamlit as st
 from langchain.chains import ConversationChain
-from langchain.llms import OpenAI, OpenAIEmbeddings, ChatOpenAI
+from langchain.llms import OpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chat_models import ChatOpenAI
 from langchain.chains.retrieval import RetrievalQA
 from langchain.store import Chroma
 from langchain.split import CharacterTextSplitter
