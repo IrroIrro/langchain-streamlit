@@ -17,7 +17,6 @@ from langchain.document_loaders import PyPDFLoader
 import os
 import uuid
 from collections import namedtuple
-from streamlit import exceptions as st_exceptions
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
@@ -57,9 +56,6 @@ if uploaded_file is not None:
         with st.spinner('Reading and processing PDF...'):
             # Now use the read_pdf function
             pages = read_pdf(uploaded_file, file_path)
-
-            if not pages:
-                raise st_exceptions.StreamlitAPIException("No text could be extracted from the uploaded PDF.")
             
             # Split PDF into chunks
             text_splitter = CharacterTextSplitter(        
@@ -76,8 +72,6 @@ if uploaded_file is not None:
                 embedding=OpenAIEmbeddings(),
                 persist_directory=persist_directory
             )
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
         
     question = st.text_input("Enter your question:", "Who are the main 3 findings?")
     if question:
