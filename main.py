@@ -19,7 +19,7 @@ import uuid
 from collections import namedtuple
 import PyPDF2
 import pickle
-import faiss
+from langchain.vectorstores import FAISS
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
@@ -94,7 +94,7 @@ if uploaded_file is not None:
         
         splits = text_splitter.split_documents(pages)
 
-        vectorstore = faiss.from_texts(
+        vectorstore = FAISS.from_texts(
             texts=splits,
             embedding=OpenAIEmbeddings()
         )
