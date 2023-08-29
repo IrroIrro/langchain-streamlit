@@ -73,7 +73,7 @@ if uploaded_file is not None:
                 persist_directory=persist_directory
             )
     except:
-        print(f"Error occurred: {e}")
+        print("Error occurred")
 
 question = st.text_input("Enter your question:", "Who are the main 3 findings?")
 if question:
