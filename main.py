@@ -8,36 +8,46 @@ from langchain.chains import ConversationChain
 from langchain.llms import OpenAI
 
 def read_pdf(file):
-    pdf_reader = PyPDF2.PdfFileReader(file)
+    pdf_reader = PyPDF2.PdfReader(file)
     text = ""
-    for page_num in range(pdf_reader.numPages):
-        page = pdf_reader.getPage(page_num)
-        text += page.extractText()
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
+        text += page.extract_text()
     return text
 
 def load_chain():
-    """Logic for loading the chain you want to use should go here."""
     llm = OpenAI(temperature=0.2)
     chain = ConversationChain(llm=llm)
     return chain
+    
+def process_paragraphs(paragraphs):
+    results = []
+    for paragraph in paragraphs:
+        # Replace this with actual processing, e.g., model inference with LangChain.
+        results.append(paragraph[::-1])
+    return results
 
 chain = load_chain()
-
-# From here down is all the StreamLit UI.
 st.set_page_config(page_title="LangChain Demo", page_icon=":robot:")
 st.header("LangChain Demo")
 
-uploaded_file = st.file_uploader("Choose a PDF file", type=["pdf"])
-
+# Upload and Read PDF
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 if uploaded_file:
     pdf_text = read_pdf(uploaded_file)
     st.text_area("Content of the PDF:", pdf_text, height=300)
+
+    paragraphs = [para for para in pdf_text.split(". \n") if para]
+    processed_results = process_paragraphs(paragraphs)
+    for result in processed_results:
+        st.write(result)
 
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
 
 if "past" not in st.session_state:
     st.session_state["past"] = []
+
 
 def get_text():
     input_text = st.text_input("You: ", "Hello, how are you?", key="input")
