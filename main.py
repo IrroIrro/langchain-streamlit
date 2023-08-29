@@ -123,18 +123,6 @@ if uploaded_file is not None:
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)
 
-    # Handle user input and conversation history
-    if "generated" not in st.session_state:
-        st.session_state["generated"] = []
-    if "past" not in st.session_state:
-        st.session_state["past"] = []
-
-    # Display conversation history
-    if st.session_state["generated"]:
-        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-            message(st.session_state["generated"][i], key=f"{i}_generated")
-            message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
-
     # Handle the question input for the Question Answering part
     question = st.text_input("Enter your question about the document:", key="question_input")
     if question:
