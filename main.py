@@ -54,12 +54,8 @@ def process_pdf(file):
     )
     splits = text_splitter.split_documents(pages)
 
-    vectorstore = Chroma.from_documents(
-        documents=splits,
-        embedding=OpenAIEmbeddings()
-    )
-    
-    return vectorstore
+    with open("vectorstore.pkl", "wb") as f:
+        pickle.dump(vectorstore, f)
 
 # Load Chain
 chain = load_chain()
@@ -73,9 +69,38 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 # Check if a file has been uploaded
 if uploaded_file is not None:
-    with st.spinner('Reading and processing PDF...'):
-        vectorstore = process_pdf(uploaded_file)
+    # Load vectorstore from pickle file if it exists
+    if os.path.exists("vectorstore.pkl"):
+        with open("vectorstore.pkl", "rb") as f:
+            vectorstore = pickle.load(f)
+    else:
+        # Create a virtual path for the file
+        virtual_directory = "/virtual_upload_directory"
+        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+        file_path = os.path.join(virtual_directory, unique_filename)
 
+        # Now use the read_pdf function
+        pages = read_pdf(uploaded_file, file_path)
+        
+        # Split PDF into chunks
+        text_splitter = CharacterTextSplitter(        
+            separator="\n\n",
+            chunk_size=2000,
+            chunk_overlap=500,
+            length_function=len,
+        )
+        
+        splits = text_splitter.split_documents(pages)
+
+        vectorstore = FAISS.from_texts(
+            texts=splits,
+            embedding=OpenAIEmbeddings()
+        )
+        
+        # Store vectorstore to pickle file
+        with open("vectorstore.pkl", "wb") as f:
+            pickle.dump(vectorstore, f)
+            
     question = st.text_input("Enter your question:", "Who are the main 3 findings?")
     if question:
         template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
