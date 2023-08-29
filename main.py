@@ -14,11 +14,22 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain.document_loaders import PyPDFLoader
+import os
+import uuid
+from collections import namedtuple
+from streamlit import exceptions as st_exceptions
 
-def read_pdf(file):
-    loader = PyPDFLoader(file)
-    pages = loader.load_and_split()
-    return pages
+# Extend the Document structure to include a metadata attribute
+Document = namedtuple("Document", ["page_content", "metadata"])
+
+def read_pdf(file, file_path):
+    pdf_reader = PyPDF2.PdfReader(file)
+    pages_content = []
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
+        metadata = {'source': file_path, 'page': page_num + 1}
+        pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
+    return pages_content
 
 def load_chain():
     llm = OpenAI(temperature=0.2)
@@ -35,27 +46,40 @@ st.header("ChatGPT for BERA")
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-if uploaded_file:
-    pages = read_pdf(uploaded_file)
-    st.text_area("Content of the PDF:", pdf_text, height=300)
+# Check if a file has been uploaded
+if uploaded_file is not None:
+    # Create a virtual path for the file
+    virtual_directory = "/virtual_upload_directory"
+    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+    file_path = os.path.join(virtual_directory, unique_filename)
 
-    # Split PDF into chunks
-    text_splitter = CharacterTextSplitter(        
-        separator="\n\n",
-        chunk_size=2000,
-        chunk_overlap=500,
-        length_function=len,
-    )
-    
-    splits = text_splitter.split_documents(pages)
+    try:
+        with st.spinner('Reading and processing PDF...'):
+            # Now use the read_pdf function
+            pages = read_pdf(uploaded_file, file_path)
 
-    vectorstore = Chroma.from_documents(
-        documents=splits,
-        embedding=OpenAIEmbeddings(),
-        persist_directory=persist_directory
-    )
+            if not pages:
+                raise st_exceptions.StreamlitAPIException("No text could be extracted from the uploaded PDF.")
+            
+            # Split PDF into chunks
+            text_splitter = CharacterTextSplitter(        
+                separator="\n\n",
+                chunk_size=2000,
+                chunk_overlap=500,
+                length_function=len,
+            )
+            
+            splits = text_splitter.split_documents(pages)
 
-    # Question Answering
+            vectorstore = Chroma.from_documents(
+                documents=splits,
+                embedding=OpenAIEmbeddings(),
+                persist_directory=persist_directory
+            )
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
+        return
+        
     question = st.text_input("Enter your question:", "Who are the main 3 findings?")
     if question:
         template = """Use the following pieces of context to answer the question at the end. 
