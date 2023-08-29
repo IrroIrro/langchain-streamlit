@@ -16,12 +16,9 @@ from langchain.prompts import PromptTemplate
 import PyPDF2
 
 def read_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(file)
-    text = ""
-    for page_num in range(len(pdf_reader.pages)):
-        page = pdf_reader.pages[page_num]
-        text += page.extract_text()
-    return text
+    loader = PyPDFLoader(file)
+    pages = loader.load_and_split()
+    return pages
 
 def load_chain():
     llm = OpenAI(temperature=0.2)
@@ -39,17 +36,17 @@ st.header("ChatGPT for BERA")
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file:
-    pdf_text = read_pdf(uploaded_file)
+    pages = read_pdf(uploaded_file)
     st.text_area("Content of the PDF:", pdf_text, height=300)
 
     # Split PDF into chunks
-    pages = [pdf_text]
     text_splitter = CharacterTextSplitter(        
         separator="\n\n",
         chunk_size=2000,
         chunk_overlap=500,
         length_function=len,
     )
+    
     splits = text_splitter.split_documents(pages)
 
     vectorstore = Chroma.from_documents(
