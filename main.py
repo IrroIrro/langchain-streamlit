@@ -78,7 +78,6 @@ if uploaded_file is not None:
             )
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
-        return
         
     question = st.text_input("Enter your question:", "Who are the main 3 findings?")
     if question:
