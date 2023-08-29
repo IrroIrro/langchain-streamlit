@@ -5,3 +5,5 @@ streamlit-chat
 pypdf
 PyPDF2
 namedtuple
+os
+uuid
