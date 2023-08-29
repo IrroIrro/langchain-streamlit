@@ -78,45 +78,40 @@ st.header("ChatGPT for BERA")
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Check if a file has been uploaded
 if uploaded_file is not None:
-    # Load vectorstore from pickle file if it exists
-    if os.path.exists("vectorstore.pkl"):
-        with open("vectorstore.pkl", "rb") as f:
-            vectorstore = pickle.load(f)
-    else:
-        # Create a virtual path for the file
-        virtual_directory = "/virtual_upload_directory"
-        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-        file_path = os.path.join(virtual_directory, unique_filename)
+    # Create a virtual path for the file
+    virtual_directory = "/virtual_upload_directory"
+    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+    file_path = os.path.join(virtual_directory, unique_filename)
 
-        # Now use the read_pdf function
-        pages = read_pdf(uploaded_file, file_path)
-        
-        # Split PDF into chunks
-        text_splitter = CharacterTextSplitter(        
-            separator="\n\n",
-            chunk_size=2000,
-            chunk_overlap=500,
-            length_function=len,
-        )
-        
-        splits = text_splitter.split_documents(pages)
+    # Now use the read_pdf function
+    pages = read_pdf(uploaded_file, file_path)
+    
+    # Split PDF into chunks
+    text_splitter = CharacterTextSplitter(        
+        separator="\n\n",
+        chunk_size=2000,
+        chunk_overlap=500,
+        length_function=len,
+    )
+    
+    splits = text_splitter.split_documents(pages)
 
-        chunk_texts = [chunk.page_content for chunk in splits]
+    chunk_texts = [chunk.page_content for chunk in splits]
 
-        # Embedding (Openai methods)
-        embeddings = OpenAIEmbeddings()
-        
-        # Store the chunks part in db (vector)
-        vectorstore = FAISS.from_texts(
-            texts=chunk_texts,  # Pass the extracted text content
-            embedding=embeddings
-        )
-        
-        # Store vectorstore to pickle file
-        with open("vectorstore.pkl", "wb") as f:
-            pickle.dump(vectorstore, f)
+    # Embedding (Openai methods)
+    embeddings = OpenAIEmbeddings()
+    
+    # Store the chunks part in db (vector)
+    vectorstore = FAISS.from_texts(
+        texts=chunk_texts,  # Pass the extracted text content
+        embedding=embeddings
+    )
+    
+    # Store vectorstore to a unique pickle file
+    pickle_filename = f"vectorstore_{uuid.uuid4()}.pkl"
+    with open(pickle_filename, "wb") as f:
+        pickle.dump(vectorstore, f)
             
     # Create the QA chain after vectorstore is available
     qa_chain = RetrievalQA.from_chain_type(llm,
@@ -141,4 +136,3 @@ if uploaded_file is not None:
         for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
             message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
             message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
-    
