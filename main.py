@@ -48,12 +48,6 @@ def get_text():
 def get_text(key="input"):
     input_text = st.text_input("You: ", "Hello, how are you?", key=key)
     return input_text
-    
-# Initialize session state keys if they don't exist
-if "generated" not in st.session_state:
-    st.session_state["generated"] = []
-if "past" not in st.session_state:
-    st.session_state["past"] = []
 
 # Load Chain
 chain = load_chain()
@@ -80,8 +74,6 @@ QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], templa
 # Set Streamlit Config
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
-
-user_input = get_text()
 
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
@@ -125,32 +117,46 @@ if uploaded_file is not None:
         # Store vectorstore to pickle file
         with open("vectorstore.pkl", "wb") as f:
             pickle.dump(vectorstore, f)
+            
+        qa_chain = RetrievalQA.from_chain_type(llm_qa,
+                               retriever=vectorstore.as_retriever(),
+                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                               return_source_documents=True)
 
-    # Get user input
-    user_input_before_upload = get_text(key="input_before_upload")
-    user_input_after_upload = get_text(key="input_after_upload")
+        # Handle user input and conversation history
+        if "generated" not in st.session_state:
+            st.session_state["generated"] = []
+        if "past" not in st.session_state:
+            st.session_state["past"] = []
     
-    if user_input_after_upload:
-        # Run the conversation chain with user input
-        output = chain.run(input=user_input_after_upload)
-
-        # Append user input and generated output to session state
-        st.session_state.past.append(user_input_after_upload)
-        st.session_state.generated.append(output)
-
-    # Display conversation history
-    if st.session_state["generated"]:
-        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-            message(st.session_state["generated"][i], key=str(i))
-            message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
-
-    # Handle the question input for the Question Answering part
-    question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
-    if question:
-        result = qa_chain({"query": question})
-        st.write(f"Answer: {result['result']}")
-
-if st.session_state["generated"]:
-    for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=f"{i}_generated")
-        message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
+        def get_text():
+            input_text = st.text_input("Ask a question about the document:", key="input")
+            return input_text
+    
+        user_input = get_text()
+    
+        if user_input:
+            # Run the conversation chain with user input
+            output = chain.run(input=user_input)
+    
+            # Append user input and generated output to session state
+            st.session_state.past.append(user_input)
+            st.session_state.generated.append(output)
+    
+        # Display conversation history
+        if st.session_state["generated"]:
+            for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+                message(st.session_state["generated"][i], key=f"{i}_generated")
+                message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
+    
+        # Handle the question input for the Question Answering part
+        question = st.text_input("Enter your question about the document:", key="question_input")
+        if question:
+            result = qa_chain({"query": question})
+            st.write(f"Answer: {result['result']}")
+    
+        # Display conversation history for QA
+        if st.session_state["generated"]:
+            for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+                message(st.session_state["generated"][i], key=f"{i}_generated_qa")
+                message(st.session_state["past"][i], is_user=True, key=f"{i}_user_qa")
