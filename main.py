@@ -56,8 +56,7 @@ def process_pdf(file):
 
     vectorstore = Chroma.from_documents(
         documents=splits,
-        embedding=OpenAIEmbeddings(),
-        persist_directory=persist_directory
+        embedding=OpenAIEmbeddings()
     )
     
     return vectorstore
