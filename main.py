@@ -64,12 +64,15 @@ def load_chain():
 # Load Chain
 chain = load_chain()
 
+# Load QA chain
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
+
 # Set Streamlit Config
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
 
 # PDF Upload and Read
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key="pdf_upload")
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 # Check if a file has been uploaded
 if uploaded_file is not None:
@@ -111,64 +114,44 @@ if uploaded_file is not None:
         with open("vectorstore.pkl", "wb") as f:
             pickle.dump(vectorstore, f)
             
-    question = st.text_input("Enter your question:", "Who are the main 3 findings?")
-    if question:
-        template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
-        Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
-        If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
-        When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
-        If the source is unknown, indicate with "No Source".
-        
-        Context:
-        {context}
-        
-        Question: 
-        {question}
-        
-        Desired Answer:"""
-        
-        QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
-    
-        # Run chain
-        llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.8)
-        qa_chain = RetrievalQA.from_chain_type(llm,
+    # Create the QA chain after vectorstore is available
+    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.8)
+    qa_chain = RetrievalQA.from_chain_type(llm,
                                    retriever=vectorstore.as_retriever(),
                                    chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                                    return_source_documents=True)
-        
 
-# Handle user input and conversation history
-if "generated" not in st.session_state:
-    st.session_state["generated"] = []
-if "past" not in st.session_state:
-    st.session_state["past"] = []
+    # Handle user input and conversation history
+    if "generated" not in st.session_state:
+        st.session_state["generated"] = []
+    if "past" not in st.session_state:
+        st.session_state["past"] = []
 
-def get_text():
-    input_text = st.text_input("You: ", "Hello, how are you?", key="input")
-    return input_text
+    def get_text():
+        input_text = st.text_input("You: ", "Hello, how are you?", key="input")
+        return input_text
 
-user_input = get_text()
+    user_input = get_text()
 
-if user_input:
-    # Run the conversation chain with user input
-    output = chain.run(input=user_input)
+    if user_input:
+        # Run the conversation chain with user input
+        output = chain.run(input=user_input)
 
-    # Append user input and generated output to session state
-    st.session_state.past.append(user_input)
-    st.session_state.generated.append(output)
+        # Append user input and generated output to session state
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(output)
 
-# Display conversation history
-if st.session_state["generated"]:
-    for i in range(len(st.session_state["generated"]) - 1, -1, -1):
-        message(st.session_state["generated"][i], key=f"{i}_generated")
-        message(st.session_state["past"][i], is_user=True, key=f"{i}_user")
+    # Display conversation history
+    if st.session_state["generated"]:
+        for i in range(len(st.session_state["generated"]) - 1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state["past"][i], is_user=True, key=str(i) + "_user")
 
-# Handle the question input for the Question Answering part
-question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
-if question:
-    # Run the QA chain with the question
-    result = qa_chain({"query": question})
-    st.write(f"Answer: {result['result']}")
+    # Handle the question input for the Question Answering part
+    question = st.text_input("Enter your question:", "Who are the main 3 findings?", key="question_input")
+    if question:
+        result = qa_chain({"query": question})
+        st.write(f"Answer: {result['result']}")
 
 if st.session_state["generated"]:
     for i in range(len(st.session_state["generated"]) - 1, -1, -1):
