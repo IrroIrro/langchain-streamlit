@@ -123,15 +123,16 @@ if uploaded_file is not None:
     # Display dropdown with user-friendly vectorstore titles
     vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
     vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-    vectorstore_titles.insert(0, "Select a vectorstore")  # Add a default option at the beginning
-    selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
-
+    
     # Load the selected vectorstore based on the user-friendly title
-    if selected_title != "Select a vectorstore":
+    selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
+    
+    # Check if a vectorstore is selected
+    if selected_title:
         selected_filename = f"vectorstore_{selected_title}.pkl"
         with open(selected_filename, "rb") as f:
             vectorstore = pickle.load(f)
-
+    
         # Display remove button
         if st.button("Remove this vectorstore"):
             os.remove(selected_filename)
@@ -141,7 +142,7 @@ if uploaded_file is not None:
                            retriever=vectorstore.as_retriever(),
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)
-    
+
         # Display conversation history for QA
         if "generated_qa" not in st.session_state:
             st.session_state["generated_qa"] = []
