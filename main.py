@@ -121,21 +121,19 @@ if uploaded_file is not None:
             with open(vectorstore_filename, "wb") as f:
                 pickle.dump(vectorstore, f)
                 
-# # Display dropdown with user-friendly vectorstore titles
-# if uploaded_files:
-    vectorstore_titles = [file_data["title"] for file_data in uploaded_files if file_data["title"]]
-    selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
+# Display dropdown with user-friendly vectorstore titles
+selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
-    if selected_title:
-        selected_index = vectorstore_titles.index(selected_title)
-        selected_filename = f"vectorstore_{selected_title}.pkl"
-        with open(selected_filename, "rb") as f:
-            vectorstore = pickle.load(f)
+if selected_title:
+    selected_index = vectorstore_titles.index(selected_title)
+    selected_filename = f"vectorstore_{selected_title}.pkl"
+    with open(selected_filename, "rb") as f:
+        vectorstore = pickle.load(f)
 
-        # Remove the selected title and file data from the list
-        if st.button("Remove this stored PDF file"):
-            removed_data = uploaded_files.pop(selected_index)
-            os.remove(selected_filename)
+    # Remove the selected title and file data from the list
+    if st.button("Remove this stored PDF file"):
+        removed_data = uploaded_files.pop(selected_index)
+        os.remove(selected_filename)
             
 # Display ongoing chat history for QA
 if "generated_qa" not in st.session_state:
