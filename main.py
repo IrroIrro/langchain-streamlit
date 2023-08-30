@@ -40,15 +40,6 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
 
-# def get_text():
-#     input_text = st.text_input("You: ", "Ask a question about the document?", key="input")
-#     return input_text
-
-# # Define the get_text function
-# def get_text(key="input"):
-#     input_text = st.text_input("You: ", "Hello, how are you?", key=key)
-#     return input_text
-
 def process_and_create_vectorstore(uploaded_file):
     # Split PDF into chunks
     text_splitter = CharacterTextSplitter(        
@@ -103,66 +94,68 @@ st.header("ChatGPT for BERA")
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Check if a file has been uploaded
+# PDF Upload and Read
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+
+# Load the selected vectorstore based on the user-friendly title
+vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
+
+# Check if a vectorstore is selected
+if selected_title:
+    selected_filename = f"vectorstore_{selected_title}.pkl"
+    with open(selected_filename, "rb") as f:
+        vectorstore = pickle.load(f)
+
+    # Display remove button
+    if st.button("Remove this file"):
+        os.remove(selected_filename)
+
+        # Refresh the list of vectorstore titles after removal
+        vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+        vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+        selected_title = None  # Reset the selected title
+
+# Display dropdown with user-friendly vectorstore titles
 if uploaded_file is not None:
-    user_defined_title = st.text_input("Enter a title for the stored file:", key="vectorstore_title")
+    user_defined_title = st.text_input("Enter a title for the vectorstore:", key="vectorstore_title")
     virtual_directory = "/virtual_upload_directory"
-    unique_filename = f"{uuid.uuid4()}_{user_defined_title.name}"
+    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
-    
+
     vectorstore = process_and_create_vectorstore(uploaded_file)
-    
-    if user_defined_title:        
+
+    if user_defined_title:
         vectorstore_filename = f"vectorstore_{user_defined_title}.pkl"
-    # else:
-    #     vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
-    
+    else:
+        vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
+
     with open(vectorstore_filename, "wb") as f:
         pickle.dump(vectorstore, f)
     
-    # Display dropdown with user-friendly vectorstore titles
-    vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-    vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-    
-    # Load the selected vectorstore based on the user-friendly title
-    selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
-    
-    # Check if a vectorstore is selected
-    if selected_title:
-        selected_filename = f"vectorstore_{selected_title}.pkl"
-        with open(selected_filename, "rb") as f:
-            vectorstore = pickle.load(f)
-    
-        # Display remove button
-        if st.button("Remove this file"):
-            os.remove(selected_filename)
             
-            # Refresh the list of vectorstore titles after removal
-            vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-            vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-            selected_title = None  # Reset the selected title
-            
-        # Create the QA chain after vectorstore is available
-        qa_chain = RetrievalQA.from_chain_type(llm,
-                           retriever=vectorstore.as_retriever(),
-                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                           return_source_documents=True)
+# Create the QA chain after vectorstore is available
+qa_chain = RetrievalQA.from_chain_type(llm,
+                   retriever=vectorstore.as_retriever(),
+                   chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                   return_source_documents=True)
 
 
-        # Display conversation history for QA
-        if "generated_qa" not in st.session_state:
-            st.session_state["generated_qa"] = []
-        if "past_qa" not in st.session_state:
-            st.session_state["past_qa"] = []
-        
-        # Handle the question input for the Question Answering part
-        question = st.text_input("Enter your question about the document:", key="question_input")
-        if question:
-            result = qa_chain({"query": question})
-            st.write(f"Answer: {result['result']}")
-        
-        # Display conversation history for QA
-        if st.session_state["generated_qa"]:
-            for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
-                message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-                message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+# Display conversation history for QA
+if "generated_qa" not in st.session_state:
+    st.session_state["generated_qa"] = []
+if "past_qa" not in st.session_state:
+    st.session_state["past_qa"] = []
+
+# Handle the question input for the Question Answering part
+question = st.text_input("Enter your question about the document:", key="question_input")
+if question:
+    result = qa_chain({"query": question})
+    st.write(f"Answer: {result['result']}")
+
+# Display conversation history for QA
+if st.session_state["generated_qa"]:
+    for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
+        message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+        message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
