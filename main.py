@@ -101,19 +101,20 @@ uploaded_files = []  # Maintain a list of uploaded files' data
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Display user-defined title input
 if uploaded_file is not None:
+    uploaded_files.append(uploaded_file)  # Add the uploaded file to the list
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:", key=f"title_{len(uploaded_files)}")
     if uploaded_file_title:
         vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
+        virtual_directory = "/virtual_upload_directory"
+        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+        file_path = os.path.join(virtual_directory, unique_filename)
 
-if uploaded_file is not None:
-    uploaded_files.append(uploaded_file)  # Add the uploaded file's data to the list
-    
-    # Display user-defined title input
-    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
-    if uploaded_file_title:
-        vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
+        vectorstore = process_and_create_vectorstore(uploaded_file)
+
+        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
+        with open(vectorstore_filename, "wb") as f:
+            pickle.dump(vectorstore, f)
 
 # Display dropdown with user-friendly vectorstore titles
 if vectorstore_titles:
