@@ -95,7 +95,6 @@ content_placeholder = st.empty()
 
 # Initialize variables
 vectorstore = None
-# Initialize variables
 vectorstore_titles = []
 uploaded_files = []  # Maintain a list of uploaded files' data
 
@@ -121,6 +120,12 @@ if uploaded_file is not None:
             with open(vectorstore_filename, "wb") as f:
                 pickle.dump(vectorstore, f)
                 
+# Get a list of vectorstore files
+vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+
+# Extract titles from filenames
+vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+
 # Display dropdown with user-friendly vectorstore titles
 selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
@@ -129,11 +134,6 @@ if selected_title:
     selected_filename = f"vectorstore_{selected_title}.pkl"
     with open(selected_filename, "rb") as f:
         vectorstore = pickle.load(f)
-
-    # Remove the selected title and file data from the list
-    if st.button("Remove this stored PDF file"):
-        removed_data = uploaded_files.pop(selected_index)
-        os.remove(selected_filename)
             
 # Display ongoing chat history for QA
 if "generated_qa" not in st.session_state:
@@ -142,7 +142,7 @@ if "past_qa" not in st.session_state:
     st.session_state["past_qa"] = []
 
 # Handle the question input for the Question Answering part
-if uploaded_file_title or vectorstore_titles:  # Proceed only if files are uploaded or selected
+if uploaded_file_title or selected_title:  # Proceed only if files are uploaded or selected
     qa_chain = RetrievalQA.from_chain_type(llm,
                        retriever=vectorstore.as_retriever(),
                        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
