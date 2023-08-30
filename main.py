@@ -97,6 +97,7 @@ content_placeholder = st.empty()
 vectorstore = None
 vectorstore_titles = []
 uploaded_files = []  # Maintain a list of uploaded files' data
+uploaded_file_title = None
 
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
