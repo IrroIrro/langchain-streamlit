@@ -108,7 +108,19 @@ if uploaded_file is not None:
     # Display user-defined title input if not already defined
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:", key=f"title_{len(uploaded_files)}")
     uploaded_files[-1]["title"] = uploaded_file_title if uploaded_file_title else None
-
+    
+    if uploaded_file_title:
+            vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
+            virtual_directory = "/virtual_upload_directory"
+            unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+            file_path = os.path.join(virtual_directory, unique_filename)
+    
+            vectorstore = process_and_create_vectorstore(uploaded_file)
+    
+            vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
+            with open(vectorstore_filename, "wb") as f:
+                pickle.dump(vectorstore, f)
+                
 # Display dropdown with user-friendly vectorstore titles
 if uploaded_files:
     vectorstore_titles = [file_data["title"] for file_data in uploaded_files if file_data["title"]]
