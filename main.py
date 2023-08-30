@@ -103,6 +103,7 @@ st.header("ChatGPT for BERA")
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
+# Check if a file has been uploaded
 if uploaded_file is not None:
     user_defined_title = st.text_input("Enter a title for the vectorstore:", key="vectorstore_title")
     virtual_directory = "/virtual_upload_directory"
@@ -122,10 +123,11 @@ if uploaded_file is not None:
     # Display dropdown with user-friendly vectorstore titles
     vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
     vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+    vectorstore_titles.insert(0, "Select a vectorstore")  # Add a default option at the beginning
     selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
 
     # Load the selected vectorstore based on the user-friendly title
-    if selected_title:
+    if selected_title != "Select a vectorstore":
         selected_filename = f"vectorstore_{selected_title}.pkl"
         with open(selected_filename, "rb") as f:
             vectorstore = pickle.load(f)
@@ -134,26 +136,26 @@ if uploaded_file is not None:
         if st.button("Remove this vectorstore"):
             os.remove(selected_filename)
             
-    # Create the QA chain after vectorstore is available
-    qa_chain = RetrievalQA.from_chain_type(llm,
-                       retriever=vectorstore.as_retriever(),
-                       chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                       return_source_documents=True)
+        # Create the QA chain after vectorstore is available
+        qa_chain = RetrievalQA.from_chain_type(llm,
+                           retriever=vectorstore.as_retriever(),
+                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                           return_source_documents=True)
     
-    # Display conversation history for QA
-    if "generated_qa" not in st.session_state:
-        st.session_state["generated_qa"] = []
-    if "past_qa" not in st.session_state:
-        st.session_state["past_qa"] = []
-    
-    # Handle the question input for the Question Answering part
-    question = st.text_input("Enter your question about the document:", key="question_input")
-    if question:
-        result = qa_chain({"query": question})
-        st.write(f"Answer: {result['result']}")
-    
-    # Display conversation history for QA
-    if st.session_state["generated_qa"]:
-        for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
-            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+        # Display conversation history for QA
+        if "generated_qa" not in st.session_state:
+            st.session_state["generated_qa"] = []
+        if "past_qa" not in st.session_state:
+            st.session_state["past_qa"] = []
+        
+        # Handle the question input for the Question Answering part
+        question = st.text_input("Enter your question about the document:", key="question_input")
+        if question:
+            result = qa_chain({"query": question})
+            st.write(f"Answer: {result['result']}")
+        
+        # Display conversation history for QA
+        if st.session_state["generated_qa"]:
+            for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
+                message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+                message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
