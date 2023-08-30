@@ -40,14 +40,14 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
 
-def get_text():
-    input_text = st.text_input("You: ", "Ask a question about the document?", key="input")
-    return input_text
+# def get_text():
+#     input_text = st.text_input("You: ", "Ask a question about the document?", key="input")
+#     return input_text
 
-# Define the get_text function
-def get_text(key="input"):
-    input_text = st.text_input("You: ", "Hello, how are you?", key=key)
-    return input_text
+# # Define the get_text function
+# def get_text(key="input"):
+#     input_text = st.text_input("You: ", "Hello, how are you?", key=key)
+#     return input_text
 
 def process_and_create_vectorstore(uploaded_file):
     # Split PDF into chunks
@@ -107,15 +107,15 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 if uploaded_file is not None:
     user_defined_title = st.text_input("Enter a title for the stored file:", key="vectorstore_title")
     virtual_directory = "/virtual_upload_directory"
-    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+    unique_filename = f"{uuid.uuid4()}_{user_defined_title.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
     
     vectorstore = process_and_create_vectorstore(uploaded_file)
     
     if user_defined_title:        
         vectorstore_filename = f"vectorstore_{user_defined_title}.pkl"
-    else:
-        vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
+    # else:
+    #     vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
     
     with open(vectorstore_filename, "wb") as f:
         pickle.dump(vectorstore, f)
