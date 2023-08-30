@@ -100,14 +100,14 @@ content_placeholder.text("How are you? Please choose or upload a PDF file.")
 vectorstore_titles = []
 uploaded_file_title = None
 
+# PDF Upload and Read
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+
 # Display user-defined title input if not already defined
 if uploaded_file_title is None:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     if uploaded_file_title:
         vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
-
-# PDF Upload and Read
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file is not None and uploaded_file_title:
     virtual_directory = "/virtual_upload_directory"
@@ -127,16 +127,16 @@ selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
 # Remove the selected title from the list to avoid duplication
 if selected_title:
-    vectorstore_titles.remove(selected_title)
+    # vectorstore_titles.remove(selected_title)
 
     # Load the selected vectorstore based on the user-friendly title
     selected_filename = f"vectorstore_{selected_title}.pkl"
     with open(selected_filename, "rb") as f:
         vectorstore = pickle.load(f)
 
-    # Display remove button
-    if st.button("Remove this stored PDF file"):
-        os.remove(selected_filename)
+    # # Display remove button
+    # if st.button("Remove this stored PDF file"):
+    #     os.remove(selected_filename)
 
 if uploaded_file is not None or selected_title is not None:                 
     # Create the QA chain after vectorstore is available
