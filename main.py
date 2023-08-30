@@ -94,9 +94,6 @@ st.header("ChatGPT for BERA")
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# PDF Upload and Read
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
-
 # Load the selected vectorstore based on the user-friendly title
 vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
 vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
