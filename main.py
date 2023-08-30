@@ -153,10 +153,6 @@ if uploaded_file_title or selected_title:  # Proceed only if files are uploaded 
     
     question_key = f"question_{len(st.session_state['past_qa'])}"
     question = st.text_input("Enter your question about the document:", key=question_key)
-    
-    # Update conversation history
-    st.session_state["generated_qa"].append(result['result'])
-    st.session_state["past_qa"].append(question)
 
     if question:
         # Generate answer using QA chain
