@@ -121,8 +121,8 @@ if uploaded_file is not None:
             with open(vectorstore_filename, "wb") as f:
                 pickle.dump(vectorstore, f)
                 
-# Display dropdown with user-friendly vectorstore titles
-if uploaded_files:
+# # Display dropdown with user-friendly vectorstore titles
+# if uploaded_files:
     vectorstore_titles = [file_data["title"] for file_data in uploaded_files if file_data["title"]]
     selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
