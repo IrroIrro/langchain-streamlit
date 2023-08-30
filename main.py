@@ -94,6 +94,7 @@ st.header("ChatGPT for BERA")
 content_placeholder = st.empty()
 
 # Initialize variables
+vectorstore = None
 vectorstore_titles = []
 uploaded_files = []  # Maintain a list of uploaded files' data
 
@@ -119,19 +120,17 @@ if uploaded_file is not None:
 if vectorstore_titles:
     selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
-    # Remove the selected title and file data from the list
+    # Only try to load the vectorstore if a title is selected
     if selected_title:
         selected_index = vectorstore_titles.index(selected_title)
-        vectorstore_titles.pop(selected_index)
-        uploaded_files.pop(selected_index)
-
-        # Load the selected vectorstore based on the user-friendly title
         selected_filename = f"vectorstore_{selected_title}.pkl"
         with open(selected_filename, "rb") as f:
             vectorstore = pickle.load(f)
 
-        # Display remove button
+        # Remove the selected title and file data from the list
         if st.button("Remove this stored PDF file"):
+            vectorstore_titles.pop(selected_index)
+            uploaded_files.pop(selected_index)
             os.remove(selected_filename)
             
 # Display ongoing chat history for QA
