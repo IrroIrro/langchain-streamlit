@@ -126,44 +126,45 @@ vectorstore_files = [filename for filename in os.listdir() if filename.startswit
 # Extract titles from filenames
 vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
 
-# Display dropdown with user-friendly vectorstore titles
-selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
-
-if selected_title:
-    selected_index = vectorstore_titles.index(selected_title)
-    selected_filename = f"vectorstore_{selected_title}.pkl"
-    with open(selected_filename, "rb") as f:
-        vectorstore = pickle.load(f)
-            
-# Display ongoing chat history for QA
-if "generated_qa" not in st.session_state:
-    st.session_state["generated_qa"] = []
-if "past_qa" not in st.session_state:
-    st.session_state["past_qa"] = []
-
-# Handle the question input for the Question Answering part
-if uploaded_file_title or selected_title:  # Proceed only if files are uploaded or selected
-    qa_chain = RetrievalQA.from_chain_type(llm,
-                       retriever=vectorstore.as_retriever(),
-                       chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                       return_source_documents=True)  
+if vectorstore_titles:
+    # Display dropdown with user-friendly vectorstore titles
+    selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
     
-    # Perform a dummy interaction to warm up the QA chain
-    dummy_result = qa_chain({"query": "Hey, how are you?"})
+    if selected_title:
+        selected_index = vectorstore_titles.index(selected_title)
+        selected_filename = f"vectorstore_{selected_title}.pkl"
+        with open(selected_filename, "rb") as f:
+            vectorstore = pickle.load(f)
+                
+    # Display ongoing chat history for QA
+    if "generated_qa" not in st.session_state:
+        st.session_state["generated_qa"] = []
+    if "past_qa" not in st.session_state:
+        st.session_state["past_qa"] = []
     
-    question_key = f"question_{len(st.session_state['past_qa'])}"
-    question = st.text_input("Enter your question about the document:", key=question_key)
-
-    if question:
-        # Generate answer using QA chain
-        result = qa_chain({"query": question})
-
-        # Update conversation history
-        st.session_state["generated_qa"].append(result['result'])
-        st.session_state["past_qa"].append(question)
-
-# Display conversation history for QA
-if st.session_state["generated_qa"]:
-    for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
-        message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-        message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+    # Handle the question input for the Question Answering part
+    if uploaded_file_title or selected_title:  # Proceed only if files are uploaded or selected
+        qa_chain = RetrievalQA.from_chain_type(llm,
+                           retriever=vectorstore.as_retriever(),
+                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                           return_source_documents=True)  
+        
+        # Perform a dummy interaction to warm up the QA chain
+        dummy_result = qa_chain({"query": "Hey, how are you?"})
+        
+        question_key = f"question_{len(st.session_state['past_qa'])}"
+        question = st.text_input("Enter your question about the document:", key=question_key)
+    
+        if question:
+            # Generate answer using QA chain
+            result = qa_chain({"query": question})
+    
+            # Update conversation history
+            st.session_state["generated_qa"].append(result['result'])
+            st.session_state["past_qa"].append(question)
+    
+    # Display conversation history for QA
+    if st.session_state["generated_qa"]:
+        for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
+            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
