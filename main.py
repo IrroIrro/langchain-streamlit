@@ -98,30 +98,25 @@ content_placeholder.text("How are you? Please choose or upload a PDF file.")
 
 # Initialize variables
 vectorstore_titles = []
-uploaded_file = None
 uploaded_file_title = None
+
+# Display user-defined title input if not already defined
+if uploaded_file_title is None:
+    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+    if uploaded_file_title:
+        vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
 
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Display user-defined title input if not already defined
-if uploaded_file is not None and uploaded_file_title is None:
-    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
-    
-    if uploaded_file_title:
-        vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
-    
+if uploaded_file is not None and uploaded_file_title:
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
 
     vectorstore = process_and_create_vectorstore(uploaded_file)
 
-    if uploaded_file_title:
-        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-    # else:
-    #     vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
-
+    vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
     with open(vectorstore_filename, "wb") as f:
         pickle.dump(vectorstore, f)
 
@@ -148,8 +143,7 @@ if uploaded_file is not None or selected_title is not None:
     qa_chain = RetrievalQA.from_chain_type(llm,
                        retriever=vectorstore.as_retriever(),
                        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                       return_source_documents=True)
-    
+                       return_source_documents=True)   
     
     # Display conversation history for QA
     if "generated_qa" not in st.session_state:
