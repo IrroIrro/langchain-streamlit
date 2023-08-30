@@ -104,15 +104,21 @@ user_defined_title = None
 vectorstore_titles = []
 user_defined_title = None
 
+# Initialize variables
+vectorstore_titles = []
+uploaded_file = None
+uploaded_file_title = None
+
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 # Display user-defined title input if not already defined
-if uploaded_file is not None and user_defined_title is None:
-    user_defined_title = st.text_input("Enter a title for the vectorstore:")
-    if user_defined_title:
-        vectorstore_titles.append(user_defined_title)  # Add the title to the list
+if uploaded_file is not None and uploaded_file_title is None:
+    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+    if uploaded_file_title:
+        vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
 
+# Automatically work with uploaded file if available
 if uploaded_file is not None:
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
@@ -120,8 +126,8 @@ if uploaded_file is not None:
 
     vectorstore = process_and_create_vectorstore(uploaded_file)
 
-    if user_defined_title:
-        vectorstore_filename = f"vectorstore_{user_defined_title}.pkl"
+    if uploaded_file_title:
+        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
     else:
         vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
 
@@ -146,7 +152,7 @@ if selected_title:
     if st.button("Remove this stored PDF file"):
         os.remove(selected_filename)
 
-if uploaded_file is not None or selected_title is not None:          
+if uploaded_file is not None or selected_title is not None:                 
     # Create the QA chain after vectorstore is available
     qa_chain = RetrievalQA.from_chain_type(llm,
                        retriever=vectorstore.as_retriever(),
