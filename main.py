@@ -112,7 +112,7 @@ if uploaded_file is not None and uploaded_file_title is None:
         vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
     
     virtual_directory = "/virtual_upload_directory"
-    unique_filename = f"{uuid.uuid4()}_{uploaded_file_title.name}"
+    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
 
     vectorstore = process_and_create_vectorstore(uploaded_file)
