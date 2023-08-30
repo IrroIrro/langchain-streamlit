@@ -98,9 +98,9 @@ vectorstore_titles = []
 uploaded_file_title = None
 uploaded_files = []  # Maintain a list of uploaded files' data
 
-# Display user-defined title input if not already defined
-if uploaded_file_title is None:
-    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+# Display user-defined title input
+if uploaded_file is not None:
+    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:", key=f"title_{len(uploaded_files)}")
     if uploaded_file_title:
         vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
 
@@ -141,11 +141,15 @@ if "past_qa" not in st.session_state:
 # Handle the question input for the Question Answering part
 question = st.text_input("Enter your question about the document:", key="question_input")
 
+# Handle the question input for the Question Answering part
 if uploaded_files or vectorstore_titles:  # Proceed only if files are uploaded or selected
+    question_key = f"question_{len(st.session_state['past_qa'])}"
+    question = st.text_input("Enter your question about the document:", key=question_key)
+
     if question:
         # Generate answer using QA chain
         result = qa_chain({"query": question})
-        
+
         # Update conversation history
         st.session_state["generated_qa"].append(result['result'])
         st.session_state["past_qa"].append(question)
