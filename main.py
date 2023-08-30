@@ -100,17 +100,20 @@ content_placeholder.text("How are you? Please choose or upload a PDF file.")
 vectorstore_titles = []
 user_defined_title = None
 
+# Initialize variables
+vectorstore_titles = []
+user_defined_title = None
+
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Display dropdown with user-friendly vectorstore titles
-if uploaded_file is not None:
-    # Display user-defined title input if not already defined
-    if user_defined_title is None:
-        user_defined_title = st.text_input("Enter a title for the vectorstore:")
-        if user_defined_title:
-            vectorstore_titles.append(user_defined_title)  # Add the title to the list
+# Display user-defined title input if not already defined
+if uploaded_file is not None and user_defined_title is None:
+    user_defined_title = st.text_input("Enter a title for the vectorstore:")
+    if user_defined_title:
+        vectorstore_titles.append(user_defined_title)  # Add the title to the list
 
+if uploaded_file is not None:
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
@@ -127,7 +130,7 @@ if uploaded_file is not None:
 
 # Display dropdown with user-friendly vectorstore titles
 vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-vectorstore_titles += [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
 selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
 # Remove the selected title from the list to avoid duplication
