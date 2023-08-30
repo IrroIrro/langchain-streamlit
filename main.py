@@ -96,6 +96,7 @@ content_placeholder = st.empty()
 # Initialize variables
 vectorstore_titles = []
 uploaded_file_title = None
+uploaded_files = []  # Maintain a list of uploaded files' data
 
 # Display user-defined title input if not already defined
 if uploaded_file_title is None:
@@ -106,56 +107,51 @@ if uploaded_file_title is None:
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-if uploaded_file is not None and uploaded_file_title:
-    virtual_directory = "/virtual_upload_directory"
-    unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-    file_path = os.path.join(virtual_directory, unique_filename)
-
-    vectorstore = process_and_create_vectorstore(uploaded_file)
-
-    vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-    with open(vectorstore_filename, "wb") as f:
-        pickle.dump(vectorstore, f)
+if uploaded_file is not None:
+    uploaded_files.append(uploaded_file)  # Add the uploaded file's data to the list
+    
+    # Display user-defined title input
+    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+    if uploaded_file_title:
+        vectorstore_titles.append(uploaded_file_title)  # Add the title to the list
 
 # Display dropdown with user-friendly vectorstore titles
-vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
+if vectorstore_titles:
+    selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
-# Remove the selected title from the list to avoid duplication
-if selected_title:
-    vectorstore_titles.remove(selected_title)
+    # Remove the selected title from the list to avoid duplication
+    if selected_title:
+        vectorstore_titles.remove(selected_title)
 
-    # Load the selected vectorstore based on the user-friendly title
-    selected_filename = f"vectorstore_{selected_title}.pkl"
-    with open(selected_filename, "rb") as f:
-        vectorstore = pickle.load(f)
+        # Load the selected vectorstore based on the user-friendly title
+        selected_filename = f"vectorstore_{selected_title}.pkl"
+        with open(selected_filename, "rb") as f:
+            vectorstore = pickle.load(f)
 
-    # Display remove button
-    if st.button("Remove this stored PDF file"):
-        os.remove(selected_filename)
+        # Display remove button
+        if st.button("Remove this stored PDF file"):
+            os.remove(selected_filename)
 
-if uploaded_file is not None or selected_title is not None:                 
-    # Create the QA chain after vectorstore is available
-    qa_chain = RetrievalQA.from_chain_type(llm,
-                       retriever=vectorstore.as_retriever(),
-                       chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                       return_source_documents=True)   
-    
-    # Display conversation history for QA
-    if "generated_qa" not in st.session_state:
-        st.session_state["generated_qa"] = []
-    if "past_qa" not in st.session_state:
-        st.session_state["past_qa"] = []
-    
-    # Handle the question input for the Question Answering part
-    question = st.text_input("Enter your question about the document:", key="question_input")
+# Display ongoing chat history for QA
+if "generated_qa" not in st.session_state:
+    st.session_state["generated_qa"] = []
+if "past_qa" not in st.session_state:
+    st.session_state["past_qa"] = []
+
+# Handle the question input for the Question Answering part
+question = st.text_input("Enter your question about the document:", key="question_input")
+
+if uploaded_files or vectorstore_titles:  # Proceed only if files are uploaded or selected
     if question:
+        # Generate answer using QA chain
         result = qa_chain({"query": question})
-        st.write(f"Answer: {result['result']}")
-    
-    # Display conversation history for QA
-    if st.session_state["generated_qa"]:
-        for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
-            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+        
+        # Update conversation history
+        st.session_state["generated_qa"].append(result['result'])
+        st.session_state["past_qa"].append(question)
+
+# Display conversation history for QA
+if st.session_state["generated_qa"]:
+    for i in range(len(st.session_state["generated_qa"]) - 1, -1, -1):
+        message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+        message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
