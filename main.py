@@ -140,10 +140,12 @@ if "past_qa" not in st.session_state:
     st.session_state["past_qa"] = []
 
 # Handle the question input for the Question Answering part
-question = st.text_input("Enter your question about the document:", key="question_input")
-
-# Handle the question input for the Question Answering part
 if uploaded_files or vectorstore_titles:  # Proceed only if files are uploaded or selected
+    qa_chain = RetrievalQA.from_chain_type(llm,
+                       retriever=vectorstore.as_retriever(),
+                       chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                       return_source_documents=True)  
+    
     question_key = f"question_{len(st.session_state['past_qa'])}"
     question = st.text_input("Enter your question about the document:", key=question_key)
 
