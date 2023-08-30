@@ -148,8 +148,15 @@ if uploaded_file_title or selected_title:  # Proceed only if files are uploaded 
                        chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                        return_source_documents=True)  
     
+    # Perform a dummy interaction to warm up the QA chain
+    dummy_result = qa_chain({"query": "Hey, how are you?"})
+    
     question_key = f"question_{len(st.session_state['past_qa'])}"
     question = st.text_input("Enter your question about the document:", key=question_key)
+    
+    # Update conversation history
+    st.session_state["generated_qa"].append(result['result'])
+    st.session_state["past_qa"].append(question)
 
     if question:
         # Generate answer using QA chain
