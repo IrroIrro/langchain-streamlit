@@ -105,7 +105,7 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 # Check if a file has been uploaded
 if uploaded_file is not None:
-    user_defined_title = st.text_input("Enter a title for the vectorstore:", key="vectorstore_title")
+    user_defined_title = st.text_input("Enter a title for the stored file:", key="vectorstore_title")
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
@@ -134,14 +134,20 @@ if uploaded_file is not None:
             vectorstore = pickle.load(f)
     
         # Display remove button
-        if st.button("Remove this vectorstore"):
+        if st.button("Remove this file"):
             os.remove(selected_filename)
+            
+            # Refresh the list of vectorstore titles after removal
+            vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+            vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+            selected_title = None  # Reset the selected title
             
         # Create the QA chain after vectorstore is available
         qa_chain = RetrievalQA.from_chain_type(llm,
                            retriever=vectorstore.as_retriever(),
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)
+
 
         # Display conversation history for QA
         if "generated_qa" not in st.session_state:
