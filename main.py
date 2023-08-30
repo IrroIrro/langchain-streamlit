@@ -69,7 +69,6 @@ chain = load_chain()
 
 # Load QA chain
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
-vectorstore = None
 
 template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
         Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
@@ -97,32 +96,21 @@ content_placeholder = st.empty()
 # Display a default prompt
 content_placeholder.text("How are you? Please choose or upload a PDF file.")
 
+# Initialize variables
+vectorstore_titles = []
+user_defined_title = None
+
 # PDF Upload and Read
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
-# Load the selected vectorstore based on the user-friendly title
-vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
-
-# Check if a vectorstore is selected
-if selected_title:
-    selected_filename = f"vectorstore_{selected_title}.pkl"
-    with open(selected_filename, "rb") as f:
-        vectorstore = pickle.load(f)
-
-    # Display remove button
-    if st.button("Remove this file"):
-        os.remove(selected_filename)
-
-        # Refresh the list of vectorstore titles after removal
-        vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-        vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-        selected_title = None  # Reset the selected title
-
 # Display dropdown with user-friendly vectorstore titles
 if uploaded_file is not None:
-    user_defined_title = st.text_input("Enter a title for the PDF file:", key="vectorstore_title")
+    # Display user-defined title input if not already defined
+    if user_defined_title is None:
+        user_defined_title = st.text_input("Enter a title for the vectorstore:")
+        if user_defined_title:
+            vectorstore_titles.append(user_defined_title)  # Add the title to the list
+
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
@@ -136,7 +124,25 @@ if uploaded_file is not None:
 
     with open(vectorstore_filename, "wb") as f:
         pickle.dump(vectorstore, f)
-    
+
+# Display dropdown with user-friendly vectorstore titles
+vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+vectorstore_titles += [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
+
+# Remove the selected title from the list to avoid duplication
+if selected_title:
+    vectorstore_titles.remove(selected_title)
+
+    # Load the selected vectorstore based on the user-friendly title
+    selected_filename = f"vectorstore_{selected_title}.pkl"
+    with open(selected_filename, "rb") as f:
+        vectorstore = pickle.load(f)
+
+    # Display remove button
+    if st.button("Remove this stored PDF file"):
+        os.remove(selected_filename)
+
 if uploaded_file is not None or selected_title is not None:          
     # Create the QA chain after vectorstore is available
     qa_chain = RetrievalQA.from_chain_type(llm,
