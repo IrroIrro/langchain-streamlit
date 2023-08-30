@@ -95,7 +95,6 @@ content_placeholder = st.empty()
 
 # Initialize variables
 vectorstore_titles = []
-uploaded_file_title = None
 uploaded_files = []  # Maintain a list of uploaded files' data
 
 # PDF Upload and Read
@@ -120,9 +119,11 @@ if uploaded_file is not None:
 if vectorstore_titles:
     selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
 
-    # Remove the selected title from the list to avoid duplication
+    # Remove the selected title and file data from the list
     if selected_title:
-        vectorstore_titles.remove(selected_title)
+        selected_index = vectorstore_titles.index(selected_title)
+        vectorstore_titles.pop(selected_index)
+        uploaded_files.pop(selected_index)
 
         # Load the selected vectorstore based on the user-friendly title
         selected_filename = f"vectorstore_{selected_title}.pkl"
@@ -132,7 +133,7 @@ if vectorstore_titles:
         # Display remove button
         if st.button("Remove this stored PDF file"):
             os.remove(selected_filename)
-
+            
 # Display ongoing chat history for QA
 if "generated_qa" not in st.session_state:
     st.session_state["generated_qa"] = []
