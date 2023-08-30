@@ -49,6 +49,30 @@ def get_text(key="input"):
     input_text = st.text_input("You: ", "Hello, how are you?", key=key)
     return input_text
 
+def process_and_create_vectorstore(uploaded_file):
+    # Split PDF into chunks
+    text_splitter = CharacterTextSplitter(        
+        separator="\n\n",
+        chunk_size=2000,
+        chunk_overlap=500,
+        length_function=len,
+    )
+    
+    pages = read_pdf(uploaded_file, file_path)  # Assuming file_path is defined earlier
+    
+    splits = text_splitter.split_documents(pages)
+
+    chunk_texts = [chunk.page_content for chunk in splits]
+
+    # Embedding (Openai methods)
+    embeddings = OpenAIEmbeddings()
+    
+    # Store the chunks part in db (vector)
+    vectorstore = FAISS.from_texts(
+        texts=chunk_texts,  # Pass the extracted text content
+        embedding=embeddings)    
+    return vectorstore
+
 # Load Chain
 chain = load_chain()
 
@@ -80,34 +104,35 @@ st.header("ChatGPT for BERA")
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file is not None:
-    # Create a virtual path for the file
+    user_defined_title = st.text_input("Enter a title for the vectorstore:", key="vectorstore_title")
     virtual_directory = "/virtual_upload_directory"
     unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
     file_path = os.path.join(virtual_directory, unique_filename)
-
-    # Now use the read_pdf function
-    pages = read_pdf(uploaded_file, file_path)
     
-    # Split PDF into chunks
-    text_splitter = CharacterTextSplitter(        
-        separator="\n\n",
-        chunk_size=2000,
-        chunk_overlap=500,
-        length_function=len,
-    )
+    vectorstore = process_and_create_vectorstore(uploaded_file)
     
-    splits = text_splitter.split_documents(pages)
-
-    chunk_texts = [chunk.page_content for chunk in splits]
-
-    # Embedding (Openai methods)
-    embeddings = OpenAIEmbeddings()
+    if user_defined_title:        
+        vectorstore_filename = f"vectorstore_{user_defined_title}.pkl"
+    else:
+        vectorstore_filename = f"vectorstore_{uuid.uuid4()}.pkl"
     
-    # Store the chunks part in db (vector)
-    vectorstore = FAISS.from_texts(
-        texts=chunk_texts,  # Pass the extracted text content
-        embedding=embeddings
-    )
+    with open(vectorstore_filename, "wb") as f:
+        pickle.dump(vectorstore, f)
+    
+    # Display dropdown with user-friendly vectorstore titles
+    vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+    vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+    selected_title = st.selectbox("Select a vectorstore:", vectorstore_titles)
+
+    # Load the selected vectorstore based on the user-friendly title
+    if selected_title:
+        selected_filename = f"vectorstore_{selected_title}.pkl"
+        with open(selected_filename, "rb") as f:
+            vectorstore = pickle.load(f)
+
+        # Display remove button
+        if st.button("Remove this vectorstore"):
+            os.remove(selected_filename)
             
     # Create the QA chain after vectorstore is available
     qa_chain = RetrievalQA.from_chain_type(llm,
