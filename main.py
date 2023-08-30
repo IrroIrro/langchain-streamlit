@@ -54,6 +54,7 @@ chain = load_chain()
 
 # Load QA chain
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
+vectorstore = None
 
 template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
         Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
