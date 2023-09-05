@@ -96,6 +96,7 @@ QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], templa
 # Initialize chat with dummy warm-up question
 dummy_result = chain.run(input="Hey, how are you?")
 
+# Initialize session state variables
 if "generated_qa" not in st.session_state:
     st.session_state["generated_qa"] = [dummy_result]
 if "past_qa" not in st.session_state:
@@ -116,7 +117,7 @@ if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
 
     # Reset the upload key to allow new uploads
-    st.session_state.file_upload_key = str(uuid.uuid4())
+    st.session_state.file_upload_key = str(uuid.uuid4())))
     
     # Button to process the uploaded PDF
     if st.button("Process and work with PDF"):
