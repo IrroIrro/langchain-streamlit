@@ -27,6 +27,7 @@ import numpy as np
 Document = namedtuple("Document", ["page_content", "metadata"])
 
 def load_chain():
+    global llm
     llm = OpenAI(temperature=0.2)
     chain = ConversationChain(llm=llm)
     return chain
@@ -84,15 +85,17 @@ if uploaded_file:
     st.session_state.uploaded_files.append({"file": uploaded_file, "title": None})
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     
-    if uploaded_file_title:
-        virtual_directory = "/virtual_upload_directory"
-        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-        file_path = os.path.join(virtual_directory, unique_filename)
-        vectorstore = process_and_create_vectorstore(uploaded_file)
-        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-        
-        with open(vectorstore_filename, "wb") as f:
-            pickle.dump(vectorstore, f)
+    # Button to process the uploaded PDF
+    if st.button("Process and work with PDF"):
+        if uploaded_file_title:
+            virtual_directory = "/virtual_upload_directory"
+            unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+            file_path = os.path.join(virtual_directory, unique_filename)
+            vectorstore = process_and_create_vectorstore(uploaded_file)
+            vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
+            
+            with open(vectorstore_filename, "wb") as f:
+                pickle.dump(vectorstore, f)
             
 vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
 vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
