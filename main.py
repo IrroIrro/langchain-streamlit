@@ -26,12 +26,6 @@ import numpy as np
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
 
-def load_chain():
-    global llm
-    llm = OpenAI(temperature=0.2)
-    chain = ConversationChain(llm=llm)
-    return chain
-
 def read_pdf(file, file_path):
     pdf_reader = PyPDF2.PdfReader(file)
     pages_content = []
@@ -64,57 +58,93 @@ def process_and_create_vectorstore(uploaded_file):
         texts=chunk_texts,  # Pass the extracted text content
         embedding=embeddings)    
     return vectorstore
-
+    
+def load_chain():
+    llm = OpenAI(temperature=0.2)
+    chain = ConversationChain(llm=llm)
+    return chain
+    
 # Initialize Streamlit UI
 st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
 st.header("ChatGPT for BERA")
 
+# Load Chain
 chain = load_chain()
 
-# Initialize session state for chat history and uploaded files
-if "generated_qa" not in st.session_state:
-    st.session_state["generated_qa"] = []
-if "past_qa" not in st.session_state:
-    st.session_state["past_qa"] = []
-if "uploaded_files" not in st.session_state:
-    st.session_state["uploaded_files"] = []
+# Load QA chain
+llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
 
+template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
+        Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
+        If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
+        When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
+        If the source is unknown, indicate with "No Source".
+        
+        Context:
+        {context}
+        
+        Question: 
+        {question}
+        
+        Desired Answer:"""
+
+QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
+
+
+# Set Streamlit Config
+st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
+st.header("ChatGPT for BERA")
+
+# Initialize chat with dummy warm-up question
+dummy_result = chain.run(input="Hey, how are you?")
+
+if "generated_qa" not in st.session_state:
+    st.session_state["generated_qa"] = [dummy_result]
+if "past_qa" not in st.session_state:
+    st.session_state["past_qa"] = ["Hey, how are you?"]
+
+# Display chat history
+for i in range(len(st.session_state["generated_qa"])):
+    message(st.session_state["generated_qa"][i])
+    message(st.session_state["past_qa"][i], is_user=True)
+
+# File Upload Section
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file:
-    st.session_state.uploaded_files.append({"file": uploaded_file, "title": None})
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     
     # Button to process the uploaded PDF
     if st.button("Process and work with PDF"):
-        if uploaded_file_title:
-            virtual_directory = "/virtual_upload_directory"
-            unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-            file_path = os.path.join(virtual_directory, unique_filename)
-            vectorstore = process_and_create_vectorstore(uploaded_file)
-            vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-            
-            with open(vectorstore_filename, "wb") as f:
-                pickle.dump(vectorstore, f)
-            
-vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-
-if vectorstore_titles:
-    selected_title = st.selectbox("Select a stored PDF file:", vectorstore_titles)
-    
-    if st.button("Load Selected File"):
-        selected_filename = f"vectorstore_{selected_title}.pkl"
+        virtual_directory = "/virtual_upload_directory"
+        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+        file_path = os.path.join(virtual_directory, unique_filename)
+        vectorstore = process_and_create_vectorstore(uploaded_file)
+        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
         
+        with open(vectorstore_filename, "wb") as f:
+            pickle.dump(vectorstore, f)
+
+# Selecting a previously processed PDF
+vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+
+if vectorstore_files:
+    vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+    selected_title = st.selectbox("Select a stored PDF file:", [""] + vectorstore_titles)
+    
+    if selected_title:
+        selected_filename = f"vectorstore_{selected_title}.pkl"
         with open(selected_filename, "rb") as f:
             vectorstore = pickle.load(f)
         
-        # Load the QA chain once the vectorstore is loaded
-        qa_chain = RetrievalQA.from_chain_type(llm, retriever=vectorstore.as_retriever(), 
-                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}, 
-                                               return_source_documents=True)
-        question = st.text_input("Enter your question about the document:")
+        # Transition to retrieval-based chat
+        qa_chain = RetrievalQA.from_chain_type(llm,
+                                               retriever=vectorstore.as_retriever(),
+                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                                               return_source_documents=True)  
         
+        question = st.text_input("Enter your question about the document:")
+
         if question:
             result = qa_chain({"query": question})
             st.session_state["generated_qa"].append(result['result'])
