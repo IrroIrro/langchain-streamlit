@@ -91,6 +91,7 @@ else:
             vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
             with open(vectorstore_filename, "wb") as f:
                 pickle.dump(vectorstore, f)
+            st.session_state["chat_history"].append(("System", "PDF processed successfully! You can now ask questions about the document."))
 
 if 'vectorstore' in locals():
     question = st.text_input("Enter your question about the document:")
@@ -101,8 +102,11 @@ if 'vectorstore' in locals():
         st.session_state["chat_history"].append(("ChatGPT", result['result']))
 
     # Display chat history
+    st.markdown("### Chat History:")
     for sender, message in st.session_state["chat_history"]:
         if sender == "You":
-            st.write(f"You: {message}")
-        else:
-            st.write(f"ChatGPT: {message}")
+            st.markdown(f"**You**: {message}")
+        elif sender == "ChatGPT":
+            st.markdown(f"**ChatGPT**: {message}")
+        else:  # for system messages
+            st.markdown(f"_{message}_")
