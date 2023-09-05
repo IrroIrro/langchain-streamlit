@@ -81,7 +81,7 @@ if "uploaded_files" not in st.session_state:
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file:
-    uploaded_files.append({"file": uploaded_file, "title": None})
+    st.session_state.uploaded_files.append({"file": uploaded_file, "title": None})
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     
     if uploaded_file_title:
@@ -93,7 +93,7 @@ if uploaded_file:
         
         with open(vectorstore_filename, "wb") as f:
             pickle.dump(vectorstore, f)
-
+            
 vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
 vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
 
