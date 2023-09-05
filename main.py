@@ -134,17 +134,23 @@ else:
 # If a vectorstore is available, perform QA
 if vectorstore:
     
-    question = st.text_input("Enter your question about the document:")
-    qa_chain = RetrievalQA.from_chain_type(llm,
-                                           retriever=vectorstore.as_retriever(),
-                                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                                           return_source_documents=True)  
+    # Maintain the state of the current question to persist the question across reruns
+    if "current_question" not in st.session_state:
+        st.session_state.current_question = ""
+
+    st.session_state.current_question = st.text_input("Enter your question about the document:", st.session_state.current_question)
     
-    if question:
-        result = qa_chain({"query": question})
+    # Use a button to trigger the QA process
+    if st.button("Submit Question") and st.session_state.current_question:
+        qa_chain = RetrievalQA.from_chain_type(llm,
+                                               retriever=vectorstore.as_retriever(),
+                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                                               return_source_documents=True)  
+        
+        result = qa_chain({"query": st.session_state.current_question})
         st.session_state["generated_qa"].append(result['result'])
-        st.session_state["past_qa"].append(question)
+        st.session_state["past_qa"].append(st.session_state.current_question)
         
         # Display the newly added QA
         message(result['result'], key=f"{len(st.session_state['generated_qa'])}_generated")
-        message(question, is_user=True, key=f"{len(st.session_state['past_qa'])}_user")
+        message(st.session_state.current_question, is_user=True, key=f"{len(st.session_state['past_qa'])}_user")
