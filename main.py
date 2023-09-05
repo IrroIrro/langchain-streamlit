@@ -72,8 +72,6 @@ def process_and_create_vectorstore(uploaded_file):
         embedding=embeddings)    
     return vectorstore
     
-
-
 # Load QA chain
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
 
@@ -128,6 +126,24 @@ if uploaded_file:
         with open(vectorstore_filename, "wb") as f:
             pickle.dump(vectorstore, f)
 
+        # Transition to retrieval-based chat for freshly processed PDF
+        qa_chain = RetrievalQA.from_chain_type(llm,
+                                               retriever=vectorstore.as_retriever(),
+                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                                               return_source_documents=True)  
+        
+        question_for_new_pdf = st.text_input("Enter your question about the newly processed document:")
+
+        if question_for_new_pdf:
+            result = qa_chain({"query": question_for_new_pdf})
+            st.session_state["generated_qa"].append(result['result'])
+            st.session_state["past_qa"].append(question_for_new_pdf)
+            
+            # Display conversation history for QA
+            for i in range(len(st.session_state["generated_qa"])):
+                message(st.session_state["generated_qa"][i], key=f"{i}_generated_new_qa")
+                message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_new_qa")
+
 # Selecting a previously processed PDF
 vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
 
@@ -153,8 +169,8 @@ if vectorstore_files:
             st.session_state["generated_qa"].append(result['result'])
             st.session_state["past_qa"].append(question)
             
-    # # Display conversation history for QA
-    # if st.session_state["generated_qa"]:
-    #     for i in range(len(st.session_state["generated_qa"])):
-    #         message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-    #         message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+    # Display conversation history for QA
+    if st.session_state["generated_qa"]:
+        for i in range(len(st.session_state["generated_qa"])):
+            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
