@@ -91,11 +91,6 @@ template = """Based on the following excerpts from scientific papers, provide an
 
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
-
-# Set Streamlit Config
-st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
-st.header("ChatGPT for BERA")
-
 # Initialize chat with dummy warm-up question
 dummy_result = chain.run(input="Hey, how are you?")
 
