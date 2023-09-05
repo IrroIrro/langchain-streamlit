@@ -95,29 +95,25 @@ if uploaded_file:
             pickle.dump(vectorstore, f)
         st.session_state["chat_history"].append(("System", "PDF processed successfully! You can now ask questions about the document."))
 
-# Continue the Q&A session
-if 'vectorstore' in locals():
-    question = st.text_input("Enter your question about the document:")
-    if st.button("Submit Question"):
-        st.session_state["chat_history"].append(("You", question))
+qa_chain = RetrievalQA.from_chain_type(llm, retriever=vectorstore.as_retriever(), chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}, return_source_documents=True)  
+# Perform a dummy interaction to warm up the QA chain
+dummy_result = qa_chain({"query": "Hey, how are you?"})
 
-        # Checking for a basic question
-        if question.lower() == "how are you?":
-            response = "I'm just a virtual assistant, so I don't have feelings, but I'm ready to help!"
-            st.session_state["chat_history"].append(("ChatGPT", response))
-        else:
-            qa_chain = RetrievalQA.from_chain_type(llm, retriever=vectorstore.as_retriever(), chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}, return_source_documents=True)  
-            result = qa_chain({"query": question})
-            st.session_state["chat_history"].append(("ChatGPT", result['result']))
+question = st.text_input("Enter your question about the document:")
+if st.button("Submit Question"):
+    st.session_state["chat_history"].append(("You", question))
+    
+    result = qa_chain({"query": question})
+    st.session_state["chat_history"].append(("ChatGPT", result['result']))
 
-    # Display chat history using containers
-    for sender, message in st.session_state["chat_history"]:
-        if sender == "You":
-            st.markdown("##### You")
-            st.container().markdown(message, unsafe_allow_html=True)
-        elif sender == "ChatGPT":
-            st.markdown("##### ChatGPT")
-            st.container().markdown(message, unsafe_allow_html=True)
-        else:  # for system messages
-            st.markdown("##### System")
-            st.container().markdown(f"_{message}_", unsafe_allow_html=True)
+# Display chat history using containers
+for sender, message in st.session_state["chat_history"]:
+    if sender == "You":
+        st.markdown("##### You")
+        st.container().markdown(message, unsafe_allow_html=True)
+    elif sender == "ChatGPT":
+        st.markdown("##### ChatGPT")
+        st.container().markdown(message, unsafe_allow_html=True)
+    else:  # for system messages
+        st.markdown("##### System")
+        st.container().markdown(f"_{message}_", unsafe_allow_html=True)
