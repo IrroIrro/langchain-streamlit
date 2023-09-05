@@ -91,104 +91,53 @@ template = """Based on the following excerpts from scientific papers, provide an
 
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
-# Check and initialize session state variables
+# Initialize session state if needed
 if "generated_qa" not in st.session_state:
-    dummy_result = chain.run(input="Hey, how are you?")
-    st.session_state["generated_qa"] = [dummy_result]
-if "past_qa" not in st.session_state:
-    st.session_state["past_qa"] = ["Hey, how are you?"]
+    st.session_state["generated_qa"] = []
 
-# Display chat history
+if "past_qa" not in st.session_state:
+    st.session_state["past_qa"] = []
+
+# Display previously stored Q&A
 for i in range(len(st.session_state["generated_qa"])):
     message(st.session_state["generated_qa"][i], key=f"{i}_generated")
     message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
 
-# Check if we've stored a key for the uploaded file or generate a new one
-if "file_upload_key" not in st.session_state:
-    st.session_state.file_upload_key = str(uuid.uuid4())
-
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=st.session_state.file_upload_key)
+# PDF Upload or Selection Logic
+vectorstore = None
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 
 if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
-
-    # Reset the upload key to allow new uploads
-    st.session_state.file_upload_key = str(uuid.uuid4())
-    
-    # Button to process the uploaded PDF
     if st.button("Process and work with PDF"):
-        virtual_directory = "/virtual_upload_directory"
-        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-        file_path = os.path.join(virtual_directory, unique_filename)
         vectorstore = process_and_create_vectorstore(uploaded_file)
         vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-        
         with open(vectorstore_filename, "wb") as f:
             pickle.dump(vectorstore, f)
-
-        # Transition to retrieval-based chat for freshly processed PDF
-        qa_chain = RetrievalQA.from_chain_type(llm,
-                                               retriever=vectorstore.as_retriever(),
-                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                                               return_source_documents=True)  
+else:
+    vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+    if vectorstore_files:
+        vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+        selected_title = st.selectbox("Select a stored PDF file:", [""] + vectorstore_titles)
         
-        question_for_new_pdf = st.text_input("Enter your question about the newly processed document:")
+        if selected_title:
+            selected_filename = f"vectorstore_{selected_title}.pkl"
+            with open(selected_filename, "rb") as f:
+                vectorstore = pickle.load(f)
 
-        if question_for_new_pdf:
-            result = qa_chain({"query": question_for_new_pdf})
-            
-            if "generated_qa" in st.session_state:
-                st.session_state["generated_qa"].append(result['result'])
-            else:
-                st.session_state["generated_qa"] = [result['result']]
-                
-            if "past_qa" in st.session_state:
-                st.session_state["past_qa"].append(question_for_new_pdf)
-            else:
-                st.session_state["past_qa"] = [question_for_new_pdf]
-
-            
-            # Display conversation history for QA
-            for i in range(len(st.session_state["generated_qa"])):
-                message(st.session_state["generated_qa"][i], key=f"{i}_generated_new_qa")
-                message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_new_qa")
-
-# Selecting a previously processed PDF
-vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-
-if vectorstore_files:
-    vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-    selected_title = st.selectbox("Select a stored PDF file:", [""] + vectorstore_titles)
+# If a vectorstore is available, perform QA
+if vectorstore:
+    qa_chain = RetrievalQA.from_chain_type(llm,
+                                           retriever=vectorstore.as_retriever(),
+                                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                                           return_source_documents=True)  
     
-    if selected_title:
-        selected_filename = f"vectorstore_{selected_title}.pkl"
-        with open(selected_filename, "rb") as f:
-            vectorstore = pickle.load(f)
+    question = st.text_input("Enter your question about the document:")
+    if question:
+        result = qa_chain({"query": question})
+        st.session_state["generated_qa"].append(result['result'])
+        st.session_state["past_qa"].append(question)
         
-        # Transition to retrieval-based chat
-        qa_chain = RetrievalQA.from_chain_type(llm,
-                                               retriever=vectorstore.as_retriever(),
-                                               chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-                                               return_source_documents=True)  
-        
-        question = st.text_input("Enter your question about the document:")
-
-        if question:
-            result = qa_chain({"query": question})
-            
-            if "generated_qa" in st.session_state:
-                st.session_state["generated_qa"].append(result['result'])
-            else:
-                st.session_state["generated_qa"] = [result['result']]
-                
-            if "past_qa" in st.session_state:
-                st.session_state["past_qa"].append(question)
-            else:
-                st.session_state["past_qa"] = [question]
-
-            
-    # Display conversation history for QA
-    if st.session_state["generated_qa"]:
-        for i in range(len(st.session_state["generated_qa"])):
-            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+        # Display the newly added QA
+        message(result['result'], key=f"{len(st.session_state['generated_qa'])}_generated")
+        message(question, is_user=True, key=f"{len(st.session_state['past_qa'])}_user")
