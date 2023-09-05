@@ -23,9 +23,10 @@ from langchain.vectorstores import FAISS
 import tiktoken
 import numpy as np
 
-# Initialize Streamlit UI
-st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
-st.header("ChatGPT for BERA")
+# Check if session_state has the flag for initialization
+if not hasattr(st.session_state, "initialized"):
+    st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
+    st.session_state.initialized = True
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
