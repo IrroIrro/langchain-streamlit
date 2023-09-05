@@ -117,7 +117,7 @@ if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
 
     # Reset the upload key to allow new uploads
-    st.session_state.file_upload_key = str(uuid.uuid4())))
+    st.session_state.file_upload_key = str(uuid.uuid4())
     
     # Button to process the uploaded PDF
     if st.button("Process and work with PDF"):
