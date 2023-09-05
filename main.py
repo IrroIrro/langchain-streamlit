@@ -93,11 +93,9 @@ template = """Based on the following excerpts from scientific papers, provide an
 
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
-# Initialize chat with dummy warm-up question
-dummy_result = chain.run(input="Hey, how are you?")
-
-# Initialize session state variables
+# Check and initialize session state variables
 if "generated_qa" not in st.session_state:
+    dummy_result = chain.run(input="Hey, how are you?")
     st.session_state["generated_qa"] = [dummy_result]
 if "past_qa" not in st.session_state:
     st.session_state["past_qa"] = ["Hey, how are you?"]
