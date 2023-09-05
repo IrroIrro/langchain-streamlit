@@ -10,4 +10,4 @@ tiktoken
 pypdf2
 transformers
 jina
-
+sentence_transformers
