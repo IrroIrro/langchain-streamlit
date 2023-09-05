@@ -24,6 +24,11 @@ uploaded_files = st.sidebar.file_uploader(
 )
 selected_files = st.sidebar.multiselect("Or select from existing PDFs:", available_pdfs)
 
+openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
+if not openai_api_key:
+    st.info("Please add your OpenAI API key to continue.")
+    st.stop()
+    
 if not uploaded_files and not selected_files:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
@@ -47,8 +52,6 @@ def configure_retriever(uploaded_files):
     retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4})
 
     return retriever
-
-# ... [Continued from the previous section of the code] ...
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
@@ -94,7 +97,7 @@ memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=msgs, r
 
 # Setup LLM and QA chain
 llm = ChatOpenAI(
-    model_name="gpt-3.5-turbo", temperature=0.5, streaming=True
+    model_name="gpt-3.5-turbo", openai_api_key = openai_api_key, temperature=0.5, streaming=True
 )
 qa_chain = ConversationalRetrievalChain.from_llm(
     llm, retriever=retriever, memory=memory, verbose=True
