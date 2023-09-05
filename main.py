@@ -48,7 +48,11 @@ def process_and_create_vectorstore(uploaded_file, file_path):
     embeddings = OpenAIEmbeddings()
     vectorstore = FAISS.from_texts(texts=chunk_texts, embedding=embeddings)    
     return vectorstore
-    
+
+# Initialize session state if needed
+if "chat_history" not in st.session_state:
+    st.session_state["chat_history"] = []
+
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
 
 template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
@@ -67,41 +71,38 @@ template = """Based on the following excerpts from scientific papers, provide an
 
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
-# Initialize session state if needed
-if "generated_qa" not in st.session_state:
-    st.session_state["generated_qa"] = []
-if "past_qa" not in st.session_state:
-    st.session_state["past_qa"] = []
+vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
+vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
+selected_title = st.selectbox("Select a stored PDF file:", [""] + vectorstore_titles)
 
-vectorstore = None
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
-
-if uploaded_file:
-    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
-    if st.button("Process PDF"):
-        virtual_directory = "/virtual_upload_directory"
-        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-        file_path = os.path.join(virtual_directory, unique_filename)
-        vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
-        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-        with open(vectorstore_filename, "wb") as f:
-            pickle.dump(vectorstore, f)
+if selected_title:
+    selected_filename = f"vectorstore_{selected_title}.pkl"
+    with open(selected_filename, "rb") as f:
+        vectorstore = pickle.load(f)
 else:
-    vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
-    if vectorstore_files:
-        vectorstore_titles = [filename[len("vectorstore_"):-len(".pkl")] for filename in vectorstore_files]
-        selected_title = st.selectbox("Select a stored PDF file:", [""] + vectorstore_titles)
-        if selected_title:
-            selected_filename = f"vectorstore_{selected_title}.pkl"
-            with open(selected_filename, "rb") as f:
-                vectorstore = pickle.load(f)
+    uploaded_file = st.file_uploader("Or, upload a new PDF file:", type="pdf")
+    if uploaded_file:
+        uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+        if st.button("Process PDF"):
+            virtual_directory = "/virtual_upload_directory"
+            unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+            file_path = os.path.join(virtual_directory, unique_filename)
+            vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
+            vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
+            with open(vectorstore_filename, "wb") as f:
+                pickle.dump(vectorstore, f)
 
-if vectorstore:
+if 'vectorstore' in locals():
     question = st.text_input("Enter your question about the document:")
     if st.button("Submit Question"):
+        st.session_state["chat_history"].append(("You", question))
         qa_chain = RetrievalQA.from_chain_type(llm, retriever=vectorstore.as_retriever(), chain_type_kwargs={"prompt": QA_CHAIN_PROMPT}, return_source_documents=True)  
         result = qa_chain({"query": question})
-        st.session_state["generated_qa"].append(result['result'])
-        st.session_state["past_qa"].append(question)
-        st.write("Answer:", result['result'])
-        st.write("Question:", question)
+        st.session_state["chat_history"].append(("ChatGPT", result['result']))
+
+    # Display chat history
+    for sender, message in st.session_state["chat_history"]:
+        if sender == "You":
+            st.write(f"You: {message}")
+        else:
+            st.write(f"ChatGPT: {message}")
