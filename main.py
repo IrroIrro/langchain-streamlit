@@ -48,7 +48,8 @@ def read_pdf(file, file_path):
         pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
     return pages_content
 
-def process_and_create_vectorstore(uploaded_file):
+def process_and_create_vectorstore(uploaded_file, file_path):
+
     # Split PDF into chunks
     text_splitter = CharacterTextSplitter(        
         separator="\n\n",
@@ -110,7 +111,8 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     if st.button("Process and work with PDF"):
-        vectorstore = process_and_create_vectorstore(uploaded_file)
+        file_path = os.path.join(virtual_directory, unique_filename)
+        vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
         vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
         with open(vectorstore_filename, "wb") as f:
             pickle.dump(vectorstore, f)
