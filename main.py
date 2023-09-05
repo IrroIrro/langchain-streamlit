@@ -12,7 +12,7 @@ from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
-st.title("🦜 BERA: Chat with Documents")
+st.title("BERA: Chat with PDFs")
 
 # Store the PDFs in a list for selection
 available_pdfs = ['document1.pdf', 'document2.pdf']  # Example list
