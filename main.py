@@ -23,18 +23,18 @@ from langchain.vectorstores import FAISS
 import tiktoken
 import numpy as np
 
-def load_chain():
-    llm = OpenAI(temperature=0.2)
-    chain = ConversationChain(llm=llm)
-    return chain
-    
-# Load Chain
-chain = load_chain()
-
 # Check if session_state has the flag for initialization
 if not hasattr(st.session_state, "initialized"):
     st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
     st.session_state.initialized = True
+
+def load_chain():
+    llm = OpenAI(temperature=0.2)
+    chain = ConversationChain(llm=llm)
+    return chain
+
+# Load Chain
+chain = load_chain()
 
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
@@ -103,11 +103,11 @@ if "past_qa" not in st.session_state:
 
 # Display chat history
 for i in range(len(st.session_state["generated_qa"])):
-    message(st.session_state["generated_qa"][i])
-    message(st.session_state["past_qa"][i], is_user=True)
+    message(st.session_state["generated_qa"][i], key=f"{i}_generated")
+    message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
 
 # File Upload Section
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=uuid.uuid4())
 
 if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
