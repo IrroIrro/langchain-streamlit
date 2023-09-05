@@ -79,20 +79,21 @@ if selected_title:
     selected_filename = f"vectorstore_{selected_title}.pkl"
     with open(selected_filename, "rb") as f:
         vectorstore = pickle.load(f)
-else:
-    uploaded_file = st.file_uploader("Or, upload a new PDF file:", type="pdf")
-    if uploaded_file:
-        uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
-        if st.button("Process PDF"):
-            virtual_directory = "/virtual_upload_directory"
-            unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
-            file_path = os.path.join(virtual_directory, unique_filename)
-            vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
-            vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
-            with open(vectorstore_filename, "wb") as f:
-                pickle.dump(vectorstore, f)
-            st.session_state["chat_history"].append(("System", "PDF processed successfully! You can now ask questions about the document."))
 
+uploaded_file = st.file_uploader("Or, upload a new PDF file:", type="pdf")
+if uploaded_file:
+    uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+    if st.button("Process PDF"):
+        virtual_directory = "/virtual_upload_directory"
+        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
+        file_path = os.path.join(virtual_directory, unique_filename)
+        vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
+        vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
+        with open(vectorstore_filename, "wb") as f:
+            pickle.dump(vectorstore, f)
+        st.session_state["chat_history"].append(("System", "PDF processed successfully! You can now ask questions about the document."))
+
+# Continue the Q&A session
 if 'vectorstore' in locals():
     question = st.text_input("Enter your question about the document:")
     if st.button("Submit Question"):
@@ -101,12 +102,14 @@ if 'vectorstore' in locals():
         result = qa_chain({"query": question})
         st.session_state["chat_history"].append(("ChatGPT", result['result']))
 
-    # Display chat history
-    st.markdown("### Chat History:")
+    # Display chat history using containers
     for sender, message in st.session_state["chat_history"]:
         if sender == "You":
-            st.markdown(f"**You**: {message}")
+            st.markdown("##### You")
+            st.container().markdown(message, unsafe_allow_html=True)
         elif sender == "ChatGPT":
-            st.markdown(f"**ChatGPT**: {message}")
+            st.markdown("##### ChatGPT")
+            st.container().markdown(message, unsafe_allow_html=True)
         else:  # for system messages
-            st.markdown(f"_{message}_")
+            st.markdown("##### System")
+            st.container().markdown(f"_{message}_", unsafe_allow_html=True)
