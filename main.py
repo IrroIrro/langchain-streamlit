@@ -101,13 +101,10 @@ if "generated_qa" not in st.session_state:
 if "past_qa" not in st.session_state:
     st.session_state["past_qa"] = ["Hey, how are you?"]
 
-# # Display chat history
-# for i in range(len(st.session_state["generated_qa"])):
-#     message(st.session_state["generated_qa"][i], key=f"{i}_generated")
-#     message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
-
-# File Upload Section
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=uuid.uuid4())
+# Display chat history
+for i in range(len(st.session_state["generated_qa"])):
+    message(st.session_state["generated_qa"][i], key=f"{i}_generated")
+    message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
 
 # Check if we've stored a key for the uploaded file or generate a new one
 if "file_upload_key" not in st.session_state:
@@ -157,8 +154,8 @@ if vectorstore_files:
             st.session_state["generated_qa"].append(result['result'])
             st.session_state["past_qa"].append(question)
             
-    # Display conversation history for QA
-    if st.session_state["generated_qa"]:
-        for i in range(len(st.session_state["generated_qa"])):
-            message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
-            message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
+    # # Display conversation history for QA
+    # if st.session_state["generated_qa"]:
+    #     for i in range(len(st.session_state["generated_qa"])):
+    #         message(st.session_state["generated_qa"][i], key=f"{i}_generated_qa")
+    #         message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user_qa")
