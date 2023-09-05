@@ -136,11 +136,17 @@ if uploaded_file:
 
         if question_for_new_pdf:
             result = qa_chain({"query": question_for_new_pdf})
+            
             if "generated_qa" in st.session_state:
                 st.session_state["generated_qa"].append(result['result'])
             else:
                 st.session_state["generated_qa"] = [result['result']]
-            st.session_state["past_qa"].append(question_for_new_pdf)
+                
+            if "past_qa" in st.session_state:
+                st.session_state["past_qa"].append(question_for_new_pdf)
+            else:
+                st.session_state["past_qa"] = [question_for_new_pdf]
+
             
             # Display conversation history for QA
             for i in range(len(st.session_state["generated_qa"])):
@@ -169,11 +175,17 @@ if vectorstore_files:
 
         if question:
             result = qa_chain({"query": question})
+            
             if "generated_qa" in st.session_state:
                 st.session_state["generated_qa"].append(result['result'])
             else:
                 st.session_state["generated_qa"] = [result['result']]
-            st.session_state["past_qa"].append(question)
+                
+            if "past_qa" in st.session_state:
+                st.session_state["past_qa"].append(question)
+            else:
+                st.session_state["past_qa"] = [question]
+
             
     # Display conversation history for QA
     if st.session_state["generated_qa"]:
