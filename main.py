@@ -23,6 +23,14 @@ from langchain.vectorstores import FAISS
 import tiktoken
 import numpy as np
 
+def load_chain():
+    llm = OpenAI(temperature=0.2)
+    chain = ConversationChain(llm=llm)
+    return chain
+    
+# Load Chain
+chain = load_chain()
+
 # Check if session_state has the flag for initialization
 if not hasattr(st.session_state, "initialized"):
     st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
@@ -64,13 +72,7 @@ def process_and_create_vectorstore(uploaded_file):
         embedding=embeddings)    
     return vectorstore
     
-def load_chain():
-    llm = OpenAI(temperature=0.2)
-    chain = ConversationChain(llm=llm)
-    return chain
-    
-# Load Chain
-chain = load_chain()
+
 
 # Load QA chain
 llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.5)
