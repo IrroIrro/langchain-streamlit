@@ -101,10 +101,10 @@ if "generated_qa" not in st.session_state:
 if "past_qa" not in st.session_state:
     st.session_state["past_qa"] = ["Hey, how are you?"]
 
-# Display chat history
-for i in range(len(st.session_state["generated_qa"])):
-    message(st.session_state["generated_qa"][i], key=f"{i}_generated")
-    message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
+# # Display chat history
+# for i in range(len(st.session_state["generated_qa"])):
+#     message(st.session_state["generated_qa"][i], key=f"{i}_generated")
+#     message(st.session_state["past_qa"][i], is_user=True, key=f"{i}_user")
 
 # File Upload Section
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=uuid.uuid4())
