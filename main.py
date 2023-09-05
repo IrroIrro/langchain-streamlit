@@ -111,6 +111,8 @@ uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
 if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
     if st.button("Process and work with PDF"):
+        virtual_directory = "/virtual_upload_directory"
+        unique_filename = f"{uuid.uuid4()}_{uploaded_file.name}"
         file_path = os.path.join(virtual_directory, unique_filename)
         vectorstore = process_and_create_vectorstore(uploaded_file, file_path)
         vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
