@@ -23,6 +23,10 @@ from langchain.vectorstores import FAISS
 import tiktoken
 import numpy as np
 
+# Initialize Streamlit UI
+st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
+st.header("ChatGPT for BERA")
+
 # Extend the Document structure to include a metadata attribute
 Document = namedtuple("Document", ["page_content", "metadata"])
 
@@ -64,10 +68,6 @@ def load_chain():
     chain = ConversationChain(llm=llm)
     return chain
     
-# Initialize Streamlit UI
-st.set_page_config(page_title="ChatGPT for BERA", page_icon=":robot:")
-st.header("ChatGPT for BERA")
-
 # Load Chain
 chain = load_chain()
 
