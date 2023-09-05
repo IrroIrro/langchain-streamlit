@@ -109,8 +109,17 @@ if "past_qa" not in st.session_state:
 # File Upload Section
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=uuid.uuid4())
 
+# Check if we've stored a key for the uploaded file or generate a new one
+if "file_upload_key" not in st.session_state:
+    st.session_state.file_upload_key = str(uuid.uuid4())
+
+uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", key=st.session_state.file_upload_key)
+
 if uploaded_file:
     uploaded_file_title = st.text_input("Enter a title for the uploaded PDF file:")
+
+    # Reset the upload key to allow new uploads
+    st.session_state.file_upload_key = str(uuid.uuid4())
     
     # Button to process the uploaded PDF
     if st.button("Process and work with PDF"):
