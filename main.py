@@ -118,6 +118,7 @@ if uploaded_file:
         vectorstore_filename = f"vectorstore_{uploaded_file_title}.pkl"
         with open(vectorstore_filename, "wb") as f:
             pickle.dump(vectorstore, f)
+        print('Working with uploaded file')
 else:
     vectorstore_files = [filename for filename in os.listdir() if filename.startswith("vectorstore_")]
     if vectorstore_files:
@@ -128,15 +129,17 @@ else:
             selected_filename = f"vectorstore_{selected_title}.pkl"
             with open(selected_filename, "rb") as f:
                 vectorstore = pickle.load(f)
+            print('Working with selected file')
 
 # If a vectorstore is available, perform QA
 if vectorstore:
+    
+    question = st.text_input("Enter your question about the document:")
     qa_chain = RetrievalQA.from_chain_type(llm,
                                            retriever=vectorstore.as_retriever(),
                                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                                            return_source_documents=True)  
     
-    question = st.text_input("Enter your question about the document:")
     if question:
         result = qa_chain({"query": question})
         st.session_state["generated_qa"].append(result['result'])
