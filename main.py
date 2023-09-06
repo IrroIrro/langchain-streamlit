@@ -70,11 +70,9 @@ def old_version_retriever(uploaded_file):
     pages = read_pdfs(in_memory_file)
 
     # Split PDF into chunks
-    text_splitter = RecursiveCharacterTextSplitter(        
-        separator="\n\n",
+    text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=2000,
-        chunk_overlap=500,
-        length_function=len,
+        chunk_overlap=500
     )
     splits = text_splitter.split_documents(pages)
     chunk_texts = [chunk.page_content for chunk in splits]
