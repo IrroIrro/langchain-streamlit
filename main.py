@@ -45,7 +45,35 @@ if not uploaded_files and not selected_files:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
 
-def configure_retriever(uploaded_files):
+def old_version_retriever(uploaded_file, file_path):
+    # Document Loading
+    pages = read_pdf(uploaded_file, file_path)
+
+    # Split PDF into chunks
+    text_splitter = CharacterTextSplitter(        
+        separator="\n\n",
+        chunk_size=2000,
+        chunk_overlap=500,
+        length_function=len,
+    )
+    splits = text_splitter.split_documents(pages)
+    chunk_texts = [chunk.page_content for chunk in splits]
+
+    # Embedding (Openai methods)
+    embeddings = OpenAIEmbeddings()
+
+    # Store the chunks part in db (vector)
+    vectorstore = FAISS.from_texts(
+        texts=chunk_texts,  # Pass the extracted text content
+        embedding=embeddings
+    )    
+
+    # Retrieve configuration
+    retriever = vectorstore.as_retriever()
+
+    return retriever
+
+def new_version_retriever(uploaded_files):
     docs = []
     temp_dir = tempfile.TemporaryDirectory()
     for file in uploaded_files:
@@ -101,7 +129,7 @@ if not uploaded_files and not selected_files:
     st.stop()
 
 files_to_process = uploaded_files if uploaded_files else selected_files
-retriever = configure_retriever(files_to_process)
+retriever = old_version_retriever(files_to_process)
 
 # Setup memory for contextual conversation
 msgs = StreamlitChatMessageHistory()
