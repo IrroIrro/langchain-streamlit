@@ -57,7 +57,7 @@ def configure_retriever(uploaded_files):
         loader = PyPDFLoader(temp_filepath)
         docs.extend(loader.load())
 
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=200)
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
     splits = text_splitter.split_documents(docs)
 
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -113,9 +113,32 @@ memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=msgs, r
 llm = ChatOpenAI(
     model_name="gpt-3.5-turbo", openai_api_key = openai_api_key, temperature=0.5, streaming=True
 )
-qa_chain = ConversationalRetrievalChain.from_llm(
-    llm, retriever=retriever, memory=memory, verbose=True
-)
+
+# qa_chain = ConversationalRetrievalChain.from_llm(
+#     llm, retriever=retriever, memory=memory, verbose=True
+# )
+
+template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
+        Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
+        If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
+        When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
+        If the source is unknown, indicate with "No Source".
+        
+        Context:
+        {context}
+        
+        Question: 
+        {question}
+        
+        Desired Answer:"""
+        
+QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
+
+qa_chain = RetrievalQA.from_chain_type(llm,
+                           retriever=vectorstore.as_retriever(),
+                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                           return_source_documents=True)  
+
 
 if len(msgs.messages) == 0 or st.sidebar.button("Clear message history"):
     msgs.clear()
