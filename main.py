@@ -116,30 +116,30 @@ llm = ChatOpenAI(
     model_name="gpt-3.5-turbo", openai_api_key = openai_api_key, temperature=0.5, streaming=True
 )
 
-qa_chain = ConversationalRetrievalChain.from_llm(
-    llm, retriever=retriever, memory=memory, verbose=True
-)
+# qa_chain = ConversationalRetrievalChain.from_llm(
+#     llm, retriever=retriever, memory=memory, verbose=True
+# )
 
-# template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
-#         Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
-#         If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
-#         When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
-#         If the source is unknown, indicate with "No Source".
+template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
+        Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
+        If the answer is not apparent from the provided context, state explicitly that you don't have the information. 
+        When referencing the content, provide a scientific citation. For instance: (Blom and Voesenek, 1996).
+        If the source is unknown, indicate with "No Source".
         
-#         Context:
-#         {context}
+        Context:
+        {context}
         
-#         Question: 
-#         {question}
+        Question: 
+        {question}
         
-#         Desired Answer:"""
+        Desired Answer:"""
         
-# QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
+QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
-# qa_chain = RetrievalQA.from_chain_type(llm,
-#                            retriever=retriever,
-#                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
-#                            return_source_documents=True)  
+qa_chain = RetrievalQA.from_chain_type(llm,
+                           retriever=retriever,
+                           chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
+                           return_source_documents=True)  
 
 
 if len(msgs.messages) == 0 or st.sidebar.button("Clear message history"):
@@ -156,5 +156,9 @@ if user_query := st.chat_input(placeholder="Ask me anything!"):
     with st.chat_message("assistant"):
         retrieval_handler = PrintRetrievalHandler(st.container())
         stream_handler = StreamHandler(st.empty())
-        response = qa_chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
-        # result = qa_chain({"query": user_query})['result']
+        # response = qa_chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
+        result = qa_chain({"query": user_query})['result']
+        result = qa_chain({"query": user_query})['result']
+        msgs.add_ai_message(result)
+        st.chat_message("assistant").write(result)
+
