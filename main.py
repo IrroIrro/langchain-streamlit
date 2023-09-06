@@ -66,7 +66,7 @@ def read_pdfs(files):
     
 def old_version_retriever(uploaded_file):
     # Document Loading
-    pages = read_pdf(uploaded_file)
+    pages = read_pdfs(uploaded_file)
 
     # Split PDF into chunks
     text_splitter = CharacterTextSplitter(        
