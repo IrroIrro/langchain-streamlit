@@ -44,10 +44,19 @@ if not openai_api_key:
 if not uploaded_files and not selected_files:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
-
-def old_version_retriever(uploaded_file, file_path):
+    
+def read_pdf(file):
+    pdf_reader = PyPDF2.PdfReader(file)
+    pages_content = []
+    for page_num in range(len(pdf_reader.pages)):
+        page = pdf_reader.pages[page_num]
+        metadata = {'source': file, 'page': page_num + 1}
+        pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
+    return pages_content
+    
+def old_version_retriever(uploaded_file):
     # Document Loading
-    pages = read_pdf(uploaded_file, file_path)
+    pages = read_pdf(uploaded_file)
 
     # Split PDF into chunks
     text_splitter = CharacterTextSplitter(        
