@@ -96,6 +96,32 @@ def old_version_retriever(uploaded_files):
 
     return retriever
 
+def merged_version_retriever(uploaded_files):
+    # Document Loading
+    docs = []
+    temp_dir = tempfile.TemporaryDirectory()
+    for file in uploaded_files:
+        temp_filepath = os.path.join(temp_dir.name, file.name)
+        with open(temp_filepath, "wb") as f:
+            f.write(file.getvalue())
+        loader = PyPDFLoader(temp_filepath)
+        docs.extend(loader.load())
+    temp_dir.cleanup()  # Clean up the temporary directory
+    
+    # Text Splitting
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
+    splits = text_splitter.split_documents(docs)
+
+    # Embeddings
+    embeddings = OpenAIEmbeddings()  # Retaining the old embeddings
+
+    # Document Storing
+    vectordb = DocArrayInMemorySearch.from_documents(splits, embeddings)
+
+    # Retrieval configuration
+    retriever = vectordb.as_retriever()
+
+    return retriever
 
 def new_version_retriever(uploaded_files):
     docs = []
@@ -168,7 +194,7 @@ else:
     files_to_process = []
 
 files_to_process = uploaded_files if uploaded_files else selected_files
-retriever = old_version_retriever(files_to_process)
+retriever = merged_version_retriever(files_to_process)
 
 # Setup memory for contextual conversation
 msgs = StreamlitChatMessageHistory()
