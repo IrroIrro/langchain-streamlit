@@ -41,8 +41,10 @@ uploaded_files = st.sidebar.file_uploader(
     label="Upload PDF files", type=["pdf"], accept_multiple_files=True
 )
 
+# Reset the session state for selected files when new files are uploaded
 if uploaded_files:
-    st.session_state.uploaded_pdfs = list(set(st.session_state.uploaded_pdfs + [file.name for file in uploaded_files]))
+    st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
+    selected_files = []
 
 selected_files = st.sidebar.multiselect("Select from uploaded PDFs:", st.session_state.uploaded_pdfs)
 
@@ -51,17 +53,15 @@ if not openai_api_key:
     st.info("Please add your OpenAI API key to continue.")
     st.stop()
 
-if not uploaded_files and not selected_files:
-    st.info("Please upload or select PDF documents to continue.")
-    st.stop()
-    
-def read_pdf(file):
-    pdf_reader = PyPDF2.PdfReader(file)
+# Updated function to handle single or multiple PDFs
+def read_pdfs(files):
     pages_content = []
-    for page_num in range(len(pdf_reader.pages)):
-        page = pdf_reader.pages[page_num]
-        metadata = {'source': file, 'page': page_num + 1}
-        pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
+    for file in files:
+        pdf_reader = PyPDF2.PdfReader(file)
+        for page_num in range(len(pdf_reader.pages)):
+            page = pdf_reader.pages[page_num]
+            metadata = {'source': file, 'page': page_num + 1}
+            pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
     return pages_content
     
 def old_version_retriever(uploaded_file):
@@ -146,6 +146,16 @@ class PrintRetrievalHandler(BaseCallbackHandler):
 if not uploaded_files and not selected_files:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
+    
+# Add a select button for the select box
+if st.sidebar.button("Confirm Selection"):
+    if not selected_files:
+        st.warning("Please select at least one file.")
+    else:
+        files_to_process = [file for file in uploaded_files if file.name in selected_files]
+        retriever = old_version_retriever(files_to_process)
+else:
+    files_to_process = []
 
 files_to_process = uploaded_files if uploaded_files else selected_files
 retriever = old_version_retriever(files_to_process[0])
