@@ -13,38 +13,34 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 
+# Handle parallelism warning
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
 st.title("BERA: Chat with PDFs")
 
-# Initialize session state for langchain_messages
 if 'langchain_messages' not in st.session_state:
     st.session_state.langchain_messages = []
 
-# Store the PDFs in a list for selection
-available_pdfs = []  # Example list
-
-# At the very beginning
+# Handling uploaded files and initializing session state for PDFs
 if 'uploaded_pdfs' not in st.session_state:
     st.session_state.uploaded_pdfs = []
-    
-# Sidebar to upload or select files
+
 st.sidebar.header('Document Source')
 uploaded_files = st.sidebar.file_uploader(
     label="Upload PDF files", type=["pdf"], accept_multiple_files=True
 )
 
 if uploaded_files:
-    # Use a set to ensure unique filenames
     st.session_state.uploaded_pdfs = list(set(st.session_state.uploaded_pdfs + [file.name for file in uploaded_files]))
 
-available_pdfs = available_pdfs + st.session_state.uploaded_pdfs
-selected_files = st.sidebar.multiselect("Or select from existing PDFs:", available_pdfs)
+selected_files = st.sidebar.multiselect("Select from uploaded PDFs:", st.session_state.uploaded_pdfs)
 
 openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 if not openai_api_key:
     st.info("Please add your OpenAI API key to continue.")
     st.stop()
-    
+
 if not uploaded_files and not selected_files:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
@@ -142,23 +138,20 @@ qa_chain = RetrievalQA.from_chain_type(llm,
                            return_source_documents=True)  
 
 
+# Initial message if no messages exist
+msgs = StreamlitChatMessageHistory()
 if len(msgs.messages) == 0 or st.sidebar.button("Clear message history"):
     msgs.clear()
     msgs.add_ai_message("How can I help you?")
 
-avatars = {"human": "user", "ai": "assistant"}
+# Displaying the chat history
 for msg in msgs.messages:
-    st.chat_message(avatars[msg.type]).write(msg.content)
-   
+    st.chat_message(msg.type).write(msg.content)
+
+# Chat interaction
 if user_query := st.chat_input(placeholder="Ask me anything!"):
     st.chat_message("user").write(user_query)
     
-    with st.chat_message("assistant"):
-        retrieval_handler = PrintRetrievalHandler(st.container())
-        stream_handler = StreamHandler(st.empty())
-        # response = qa_chain.run(user_query, callbacks=[retrieval_handler, stream_handler])
-        result = qa_chain({"query": user_query})['result']
-        result = qa_chain({"query": user_query})['result']
-        msgs.add_ai_message(result)
-        st.chat_message("assistant").write(result)
-
+    # Retrieve the result and display
+    result = qa_chain({"query": user_query})['result']
+    st.chat_message("assistant").write(result)
