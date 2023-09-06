@@ -65,6 +65,9 @@ def read_pdfs(files):
     return pages_content
     
 def old_version_retriever(uploaded_file):
+    if isinstance(uploaded_file, bytes):
+        uploaded_file = BytesIO(uploaded_file)
+    
     # Document Loading
     pages = read_pdfs(uploaded_file)
 
