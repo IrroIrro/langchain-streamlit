@@ -20,7 +20,6 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import io
-from langchain.memory.chat_message_histories.base import BaseChatMessageHistory
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -149,12 +148,6 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
-class StreamlitChatMessageHistory(BaseChatMessageHistory):
-    def __init__(self, key='langchain_messages'):
-        if key not in st.session_state:
-            st.session_state[key] = []
-        self._messages = st.session_state[key]
-
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
         self.container = container
@@ -201,7 +194,7 @@ else:
     files_to_process = []
 
 files_to_process = uploaded_files if uploaded_files else selected_files
-retriever = merged_version_retriever(files_to_process)
+retriever = old_version_retriever(files_to_process)
 
 # Setup memory for contextual conversation
 msgs = StreamlitChatMessageHistory()
