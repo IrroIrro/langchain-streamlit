@@ -59,8 +59,8 @@ def read_pdfs(file):
     with io.BytesIO(file.getvalue()) as open_pdf_file:
         pdf_reader = PyPDF2.PdfReader(open_pdf_file)
         number_of_pages = len(pdf_reader.pages)
-        text_pages = [pdf_reader.pages[i].extract_text() for i in range(number_of_pages)]  # Notice the change here
-    return text_pages  
+        text_pages = [Page(pdf_reader.pages[i].extract_text()) for i in range(number_of_pages)]
+    return text_pages
 
 def old_version_retriever(uploaded_file):
     # Convert bytes object to in-memory file-like object
@@ -70,7 +70,7 @@ def old_version_retriever(uploaded_file):
     pages = read_pdfs(in_memory_file)
 
     # Split PDF into chunks
-    text_splitter = CharacterTextSplitter(        
+    text_splitter = RecursiveCharacterTextSplitter(        
         separator="\n\n",
         chunk_size=2000,
         chunk_overlap=500,
@@ -113,6 +113,10 @@ def new_version_retriever(uploaded_files):
     retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4})
 
     return retriever
+    
+class Page:
+    def __init__(self, page_content):
+        self.page_content = page_content
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
