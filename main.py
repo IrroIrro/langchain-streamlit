@@ -137,7 +137,7 @@ template = """Based on the following excerpts from scientific papers, provide an
 QA_CHAIN_PROMPT = PromptTemplate(input_variables=["context", "question"], template=template)
 
 qa_chain = RetrievalQA.from_chain_type(llm,
-                           retriever=vectorstore.as_retriever(),
+                           retriever=retriever,
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)  
 
