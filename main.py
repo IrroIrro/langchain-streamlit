@@ -53,13 +53,13 @@ openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
 if not openai_api_key:
     st.info("Please add your OpenAI API key to continue.")
     st.stop()
-
+    
 def read_pdfs(file):
     # Use PyPDF2 to extract text from the PDF
     with io.BytesIO(file.getvalue()) as open_pdf_file:
         pdf_reader = PyPDF2.PdfReader(open_pdf_file)
         number_of_pages = len(pdf_reader.pages)
-        text_pages = [Page(pdf_reader.pages[i].extract_text()) for i in range(number_of_pages)]
+        text_pages = [Page(pdf_reader.pages[i].extract_text(), metadata={"page_number": i + 1}) for i in range(number_of_pages)]
     return text_pages
 
 def old_version_retriever(uploaded_file):
@@ -91,7 +91,6 @@ def old_version_retriever(uploaded_file):
 
     return retriever
 
-
 def new_version_retriever(uploaded_files):
     docs = []
     temp_dir = tempfile.TemporaryDirectory()
@@ -113,8 +112,9 @@ def new_version_retriever(uploaded_files):
     return retriever
     
 class Page:
-    def __init__(self, page_content):
+    def __init__(self, page_content, metadata=None):
         self.page_content = page_content
+        self.metadata = metadata or {}
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
