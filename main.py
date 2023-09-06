@@ -148,6 +148,12 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
+class StreamlitChatMessageHistory:
+    def __init__(self, key='langchain_messages'):
+        if key not in st.session_state:
+            st.session_state[key] = []
+        self._messages = st.session_state[key]
+
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
         self.container = container
