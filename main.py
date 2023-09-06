@@ -14,7 +14,7 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 import PyPDF2
 from collections import namedtuple
-from langchain.retrievers import FAISS
+from langchain.vectorstores import FAISS
 from langchain.splitters import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 
