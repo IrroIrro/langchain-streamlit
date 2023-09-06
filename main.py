@@ -162,7 +162,7 @@ else:
     files_to_process = []
 
 files_to_process = uploaded_files if uploaded_files else selected_files
-retriever = old_version_retriever(files_to_process[0])
+retriever = old_version_retriever(files_to_process)
 
 # Setup memory for contextual conversation
 msgs = StreamlitChatMessageHistory()
