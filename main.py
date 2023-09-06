@@ -12,6 +12,7 @@ from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
+import PyPDF2
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
