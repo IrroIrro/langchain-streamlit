@@ -11,6 +11,7 @@ from langchain.chains import ConversationalRetrievalChain
 from langchain.vectorstores import DocArrayInMemorySearch
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
+from langchain.chains import RetrievalQA
 
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
 st.title("BERA: Chat with PDFs")
