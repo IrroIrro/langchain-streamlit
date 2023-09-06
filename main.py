@@ -19,6 +19,7 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
+import io
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -64,12 +65,13 @@ def read_pdfs(files):
             pages_content.append(Document(page_content=page.extract_text(), metadata=metadata))
     return pages_content
     
+
 def old_version_retriever(uploaded_file):
-    if isinstance(uploaded_file, bytes):
-        uploaded_file = BytesIO(uploaded_file)
-    
+    # Convert bytes object to in-memory file-like object
+    in_memory_file = io.BytesIO(uploaded_file.getvalue())
+
     # Document Loading
-    pages = read_pdfs(uploaded_file)
+    pages = read_pdfs(in_memory_file)
 
     # Split PDF into chunks
     text_splitter = CharacterTextSplitter(        
@@ -94,6 +96,7 @@ def old_version_retriever(uploaded_file):
     retriever = vectorstore.as_retriever()
 
     return retriever
+
 
 def new_version_retriever(uploaded_files):
     docs = []
