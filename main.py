@@ -20,6 +20,9 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
 st.title("BERA: Chat with PDFs")
 
+# Extend the Document structure to include a metadata attribute
+Document = namedtuple("Document", ["page_content", "metadata"])
+
 if 'langchain_messages' not in st.session_state:
     st.session_state.langchain_messages = []
 
