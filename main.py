@@ -14,9 +14,11 @@ from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 import PyPDF2
 from collections import namedtuple
-from langchain.vectorstores import FAISS
-from langchain.splitters import CharacterTextSplitter
+import os
+from langchain.document_loaders import PyPDFLoader
+from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
