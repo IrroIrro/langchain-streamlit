@@ -6,7 +6,7 @@ pypdf
 PyPDF2
 faiss-cpu
 tiktoken
-
+namedtuple
 pypdf2
 transformers
 jina
