@@ -13,7 +13,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain.chains import RetrievalQA
 import PyPDF2
-import namedtuple
+from collections import namedtuple
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
