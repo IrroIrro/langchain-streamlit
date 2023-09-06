@@ -62,34 +62,40 @@ def read_pdfs(file):
         text_pages = [Page(pdf_reader.pages[i].extract_text(), metadata={"page_number": i + 1}) for i in range(number_of_pages)]
     return text_pages
 
-def old_version_retriever(uploaded_file):
-    # Convert bytes object to in-memory file-like object
-    in_memory_file = io.BytesIO(uploaded_file.getvalue())
+def old_version_retriever(uploaded_files):
+    # Initialize an empty list to store all pages from all uploaded files
+    all_pages = []
 
-    # Document Loading
-    pages = read_pdfs(in_memory_file)
-
-    # Split PDF into chunks
-    text_splitter = RecursiveCharacterTextSplitter(
+    for uploaded_file in uploaded_files:
+        # Convert uploaded file to in-memory binary stream
+        in_memory_file = io.BytesIO(uploaded_file.getvalue())
+        
+        # Extract pages from the current uploaded file
+        pages = read_pdfs(in_memory_file)
+        
+        # Append the extracted pages to the all_pages list
+        all_pages.extend(pages)
+    
+    # Split text from all_pages using your splitter
+    text_splitter = CharacterTextSplitter(        
+        separator="\n\n",
         chunk_size=2000,
-        chunk_overlap=500
+        chunk_overlap=500,
+        length_function=len,
     )
-    splits = text_splitter.split_documents(pages)
+    splits = text_splitter.split_documents(all_pages)
+    
+    # Rest of your function remains the same
     chunk_texts = [chunk.page_content for chunk in splits]
-
-    # Embedding (Openai methods)
     embeddings = OpenAIEmbeddings()
-
-    # Store the chunks part in db (vector)
     vectorstore = FAISS.from_texts(
-        texts=chunk_texts,  # Pass the extracted text content
+        texts=chunk_texts,
         embedding=embeddings
     )    
-
-    # Retrieve configuration
     retriever = vectorstore.as_retriever()
 
     return retriever
+
 
 def new_version_retriever(uploaded_files):
     docs = []
