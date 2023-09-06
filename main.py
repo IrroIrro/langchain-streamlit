@@ -59,8 +59,8 @@ def read_pdfs(file):
     with io.BytesIO(file.getvalue()) as open_pdf_file:
         pdf_reader = PyPDF2.PdfReader(open_pdf_file)
         number_of_pages = len(pdf_reader.pages)
-        text_pages = [pdf_reader.pages[i].extractText() for i in range(number_of_pages)]
-    return text_pages    
+        text_pages = [pdf_reader.pages[i].extract_text() for i in range(number_of_pages)]  # Notice the change here
+    return text_pages  
 
 def old_version_retriever(uploaded_file):
     # Convert bytes object to in-memory file-like object
