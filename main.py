@@ -14,14 +14,28 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
 st.title("BERA: Chat with PDFs")
 
-# Store the PDFs in a list for selection
-available_pdfs = ['document1.pdf', 'document2.pdf']  # Example list
+# Initialize session state for langchain_messages
+if 'langchain_messages' not in st.session_state:
+    st.session_state.langchain_messages = []
 
+# Store the PDFs in a list for selection
+available_pdfs = []  # Example list
+
+# At the very beginning
+if 'uploaded_pdfs' not in st.session_state:
+    st.session_state.uploaded_pdfs = []
+    
 # Sidebar to upload or select files
 st.sidebar.header('Document Source')
 uploaded_files = st.sidebar.file_uploader(
     label="Upload PDF files", type=["pdf"], accept_multiple_files=True
 )
+
+if uploaded_files:
+    # Use a set to ensure unique filenames
+    st.session_state.uploaded_pdfs = list(set(st.session_state.uploaded_pdfs + [file.name for file in uploaded_files]))
+
+available_pdfs = available_pdfs + st.session_state.uploaded_pdfs
 selected_files = st.sidebar.multiselect("Or select from existing PDFs:", available_pdfs)
 
 openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
