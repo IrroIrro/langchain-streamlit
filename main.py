@@ -27,25 +27,19 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 st.set_page_config(page_title="BERA: Chat with Documents", page_icon="🦜")
 st.title("BERA: Chat with PDFs")
 
-# Extend the Document structure to include a metadata attribute
-Document = namedtuple("Document", ["page_content", "metadata"])
-
+# Initialize the session state if not already done
+if 'uploaded_pdfs' not in st.session_state:
+    st.session_state.uploaded_pdfs = []
 if 'langchain_messages' not in st.session_state:
     st.session_state.langchain_messages = []
 
-# Handling uploaded files and initializing session state for PDFs
-if 'uploaded_pdfs' not in st.session_state:
-    st.session_state.uploaded_pdfs = []
-
 st.sidebar.header('Document Source')
 uploaded_files = st.sidebar.file_uploader(
-    label="Upload PDF files", type=["pdf"], accept_multiple_files=True
-)
+    label="Upload PDF files", type=["pdf"], accept_multiple_files=True)
 
 # Reset the session state for selected files when new files are uploaded
 if uploaded_files:
     st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
-    selected_files = []
 
 selected_files = st.sidebar.multiselect("Select from uploaded PDFs:", st.session_state.uploaded_pdfs)
 
@@ -147,20 +141,25 @@ else:
     files_to_process = []
 
 files_to_process = uploaded_files if uploaded_files else selected_files
+
+if not files_to_process:
+    st.info("Please upload or select PDF documents to continue.")
+    st.stop()
+
 retriever = old_version_retriever(files_to_process)
 
-# Setup memory for contextual conversation
+# Initial message if no messages exist
 msgs = StreamlitChatMessageHistory()
+if not msgs.messages or st.sidebar.button("Clear message history"):
+    msgs.clear()
+    msgs.add_ai_message("How can I help you?")
+    
 memory = ConversationBufferMemory(memory_key="chat_history", chat_memory=msgs, return_messages=True)
 
 # Setup LLM and QA chain
 llm = ChatOpenAI(
     model_name="gpt-3.5-turbo", openai_api_key = openai_api_key, temperature=0.5, streaming=True
 )
-
-# qa_chain = ConversationalRetrievalChain.from_llm(
-#     llm, retriever=retriever, memory=memory, verbose=True
-# )
 
 template = """Based on the following excerpts from scientific papers, provide an answer to the question that follows.
         Structure your answer with a minimum of two paragraphs, each containing at least five sentences. Begin by presenting a general overview and then delve into specific details, such as numerical data or particular citations.
@@ -183,12 +182,6 @@ qa_chain = RetrievalQA.from_chain_type(llm,
                            chain_type_kwargs={"prompt": QA_CHAIN_PROMPT},
                            return_source_documents=True)  
 
-
-# Initial message if no messages exist
-msgs = StreamlitChatMessageHistory()
-if len(msgs.messages) == 0 or st.sidebar.button("Clear message history"):
-    msgs.clear()
-    msgs.add_ai_message("How can I help you?")
 
 # Displaying the chat history
 for msg in msgs.messages:
