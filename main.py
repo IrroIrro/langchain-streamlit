@@ -20,6 +20,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import io
+from langchain.stores.message.base import BaseChatMessageHistory
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -95,7 +96,7 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
-class StreamlitChatMessageHistory:
+class StreamlitChatMessageHistory(BaseChatMessageHistory):
     def __init__(self, key='langchain_messages'):
         self.key = key
 
