@@ -235,7 +235,8 @@ qa_chain = RetrievalQA.from_chain_type(llm,
 
 # Displaying the chat history
 for msg in msgs.messages:
-    st.chat_message(msg.type).write(msg.content)
+    # st.chat_message(msg.type).write(msg.content)
+    st.chat_message(msg["type"]).write(msg["content"])
 
 # Chat interaction
 if user_query := st.chat_input(placeholder="Ask me anything!"):
