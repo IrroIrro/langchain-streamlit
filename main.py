@@ -20,7 +20,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import io
-from langchain.stores.message.base import BaseChatMessageHistory
+from langchain.memory.chat_message_histories.base import BaseChatMessageHistory
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
