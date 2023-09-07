@@ -108,7 +108,7 @@ class LangChainStreamlitChatMessageHistory:
     def __init__(self, key):
         self.key = key
         
-class StreamlitChatMessageHistory(LangChainStreamlitChatMessageHistory):
+class StreamlitChatMessageHistory(BaseChatMessageHistory, LangChainStreamlitChatMessageHistory):
     def __init__(self, key="langchain_messages"):
         # First, ensure the base class's __init__ method is fully executed
         super().__init__(key=key)
