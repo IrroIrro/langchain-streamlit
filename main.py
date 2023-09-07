@@ -41,6 +41,10 @@ uploaded_files = st.sidebar.file_uploader(
 if uploaded_files:
     st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
 
+# Check if uploaded_files has contents, then update session state.
+if uploaded_files:
+    st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
+
 selected_files = st.sidebar.multiselect("Select from uploaded PDFs:", st.session_state.uploaded_pdfs)
 
 openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
@@ -116,6 +120,10 @@ class StreamlitChatMessageHistory(LangChainStreamlitChatMessageHistory):
     def add_ai_message(self, message):
         self._messages.append({"type": "assistant", "content": message})
 
+    def clear(self):
+        st.session_state[self.key] = []
+        self._messages = st.session_state[self.key]
+
     @property
     def messages(self):
         return self._messages
@@ -159,19 +167,17 @@ if not uploaded_files and not selected_files:
 if st.sidebar.button("Confirm Selection"):
     if not selected_files:
         st.warning("Please select at least one file.")
+        files_to_process = []
     else:
         files_to_process = [file for file in uploaded_files if file.name in selected_files]
-        retriever = old_version_retriever(files_to_process)
 else:
-    files_to_process = []
-
-files_to_process = uploaded_files if uploaded_files else selected_files
+    files_to_process = uploaded_files if uploaded_files else selected_files
 
 if not files_to_process:
     st.info("Please upload or select PDF documents to continue.")
     st.stop()
-
-retriever = old_version_retriever(files_to_process)
+else:
+    retriever = old_version_retriever(files_to_process)
 
 # Initial message if no messages exist
 msgs = StreamlitChatMessageHistory()
