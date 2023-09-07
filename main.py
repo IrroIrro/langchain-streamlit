@@ -62,8 +62,11 @@ def old_version_retriever(uploaded_files):
 
     for uploaded_file in uploaded_files:
         # Convert uploaded file to in-memory binary stream
-        in_memory_file = io.BytesIO(uploaded_file.getvalue())
-        
+        if isinstance(uploaded_file, str):
+            in_memory_file = io.BytesIO(uploaded_file.encode())  # Convert string to bytes and then to BytesIO object
+        else:
+            in_memory_file = io.BytesIO(uploaded_file.getvalue())
+                
         # Extract pages from the current uploaded file
         pages = read_pdfs(in_memory_file)
         
