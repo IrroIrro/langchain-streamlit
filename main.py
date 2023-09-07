@@ -95,53 +95,6 @@ def old_version_retriever(uploaded_files):
     retriever = vectorstore.as_retriever()
 
     return retriever
-
-def merged_version_retriever(uploaded_files):
-    # Document Loading
-    docs = []
-    temp_dir = tempfile.TemporaryDirectory()
-    for file in uploaded_files:
-        temp_filepath = os.path.join(temp_dir.name, file.name)
-        with open(temp_filepath, "wb") as f:
-            f.write(file.getvalue())
-        loader = PyPDFLoader(temp_filepath)
-        docs.extend(loader.load())
-    temp_dir.cleanup()  # Clean up the temporary directory
-    
-    # Text Splitting
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
-    splits = text_splitter.split_documents(docs)
-
-    # Embeddings
-    embeddings = OpenAIEmbeddings()  # Retaining the old embeddings
-
-    # Document Storing
-    vectordb = DocArrayInMemorySearch.from_documents(splits, embeddings)
-
-    # Retrieval configuration
-    retriever = vectordb.as_retriever()
-
-    return retriever
-
-def new_version_retriever(uploaded_files):
-    docs = []
-    temp_dir = tempfile.TemporaryDirectory()
-    for file in uploaded_files:
-        temp_filepath = os.path.join(temp_dir.name, file.name)
-        with open(temp_filepath, "wb") as f:
-            f.write(file.getvalue())
-        loader = PyPDFLoader(temp_filepath)
-        docs.extend(loader.load())
-
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=3000, chunk_overlap=500)
-    splits = text_splitter.split_documents(docs)
-
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectordb = DocArrayInMemorySearch.from_documents(splits, embeddings)
-
-    retriever = vectordb.as_retriever(search_type="mmr", search_kwargs={"k": 2, "fetch_k": 4})
-
-    return retriever
     
 class Page:
     def __init__(self, page_content, metadata=None):
