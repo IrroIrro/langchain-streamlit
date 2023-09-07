@@ -20,7 +20,6 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import io
-from langchain.memory.chat_message_histories.base import BaseChatMessageHistory
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -96,28 +95,23 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
-class StreamlitChatMessageHistory(BaseChatMessageHistory):
-    def __init__(self, key='langchain_messages'):
-        self.key = key
+from langchain.memory.chat_message_histories import StreamlitChatMessageHistory as LangChainStreamlitChatMessageHistory
 
-    @property
-    def _messages(self):
-        # Each time _messages is accessed, we check if the key exists. 
-        # If not, we initialize it. 
-        # This ensures that any time _messages is called, it either retrieves 
-        # an existing list or sets up a new one, preventing the KeyError.
+class StreamlitChatMessageHistory(LangChainStreamlitChatMessageHistory):
+    def __init__(self, key="langchain_messages"):
+        super().__init__(key=key)
+        
+        # Ensure the key exists in the session state
         if self.key not in st.session_state:
             st.session_state[self.key] = []
-        return st.session_state[self.key]
+        
+        self._messages = st.session_state[self.key]
 
-    def add_ai_message(self, content):
-        self._messages.append({"type": "ai", "content": content})
+    def add_user_message(self, message):
+        self._messages.append({"type": "user", "content": message})
 
-    def add_user_message(self, content):
-        self._messages.append({"type": "user", "content": content})
-
-    def clear(self):
-        self._messages.clear()
+    def add_ai_message(self, message):
+        self._messages.append({"type": "assistant", "content": message})
 
     @property
     def messages(self):
