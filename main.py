@@ -106,6 +106,7 @@ from langchain.memory.chat_message_histories import StreamlitChatMessageHistory 
 
 class StreamlitChatMessageHistory(LangChainStreamlitChatMessageHistory):
     def __init__(self, key="langchain_messages"):
+        # First, ensure the base class's __init__ method is fully executed
         super().__init__(key=key)
         
         # Ensure the key exists in the session state
