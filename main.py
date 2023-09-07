@@ -20,6 +20,9 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import io
+from typing import List
+from langchain.schema import BaseChatMessageHistory
+from langchain.schema.messages import BaseMessage
 
 # Handle parallelism warning
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -102,36 +105,47 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
-from langchain.memory.chat_message_histories import StreamlitChatMessageHistory as LangChainStreamlitChatMessageHistory
+class StreamlitChatMessageHistory(BaseChatMessageHistory):
+    """
+    Chat message history that stores messages in Streamlit session state.
 
-class LangChainStreamlitChatMessageHistory:
-    def __init__(self, key):
-        self.key = key
-        
-class StreamlitChatMessageHistory(BaseChatMessageHistory, LangChainStreamlitChatMessageHistory):
-    def __init__(self, key="langchain_messages"):
-        # First, ensure the base class's __init__ method is fully executed
-        super().__init__(key=key)
-        
-        # Ensure the key exists in the session state
-        if self.key not in st.session_state:
-            st.session_state[self.key] = []
-        
-        self._messages = st.session_state[self.key]
+    Args:
+        key: The key to use in Streamlit session state for storing messages.
+    """
 
-    def add_user_message(self, message):
-        self._messages.append({"type": "user", "content": message})
+    def __init__(self, key: str = "langchain_messages"):
+        try:
+            import streamlit as st
+        except ImportError as e:
+            raise ImportError(
+                "Unable to import streamlit, please run `pip install streamlit`."
+            ) from e
 
-    def add_ai_message(self, message):
-        self._messages.append({"type": "assistant", "content": message})
-
-    def clear(self):
-        st.session_state[self.key] = []
-        self._messages = st.session_state[self.key]
+        if key not in st.session_state:
+            st.session_state[key] = []
+        self._messages = st.session_state[key]
 
     @property
-    def messages(self):
+    def messages(self) -> List[BaseMessage]:
+        """Retrieve the current list of messages"""
         return self._messages
+
+    def add_message(self, message: BaseMessage) -> None:
+        """Add a message to the session memory"""
+        self._messages.append(message)
+
+    def add_user_message(self, message: str) -> None:
+        """Add a user message to the session memory"""
+        self._messages.append({"type": "user", "content": message})
+
+    def add_ai_message(self, message: str) -> None:
+        """Add an AI message to the session memory"""
+        self._messages.append({"type": "assistant", "content": message})
+
+    def clear(self) -> None:
+        """Clear session memory"""
+        self._messages.clear()
+
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
