@@ -97,44 +97,30 @@ class Page:
 
 class StreamlitChatMessageHistory:
     def __init__(self, key='langchain_messages'):
-        # The constructor accepts a key, which defaults to 'langchain_messages'. 
-        # This allows the class to be more generic, and you could potentially use it for 
-        # other chat message histories by providing a different key if needed.
         self.key = key
-        
-        # Here, we're checking if our key (by default 'langchain_messages') exists in the session state. 
-        # If it doesn't exist, we initialize it as an empty list. 
-        # This ensures that we always have 'langchain_messages' in our session state after this class is instantiated.
+
+    @property
+    def _messages(self):
+        # Each time _messages is accessed, we check if the key exists. 
+        # If not, we initialize it. 
+        # This ensures that any time _messages is called, it either retrieves 
+        # an existing list or sets up a new one, preventing the KeyError.
         if self.key not in st.session_state:
             st.session_state[self.key] = []
-        
-        # Now, we can safely assign the session state's 'langchain_messages' to our internal _messages attribute 
-        # without fear of a KeyError.
-        self._messages = st.session_state[self.key]
+        return st.session_state[self.key]
 
     def add_ai_message(self, content):
-        # This function allows you to add a new message from the AI to the chat history.
-        # We're appending a dictionary to our messages list, marking the type as 'ai' and storing the content.
         self._messages.append({"type": "ai", "content": content})
-        # Since _messages is just a reference to our session state's 'langchain_messages', 
-        # the change is reflected in the session state automatically.
 
     def add_user_message(self, content):
-        # Similarly, this function adds a user's message to the chat history. 
-        # The procedure is almost identical to add_ai_message, but the type is 'user' instead.
         self._messages.append({"type": "user", "content": content})
 
     def clear(self):
-        # This function clears the chat history by setting it to an empty list.
         self._messages.clear()
 
     @property
     def messages(self):
-        # This is a property (a kind of "read-only" method) that allows you to get all the messages from the chat history. 
-        # It returns the _messages attribute, which is our internal representation of the session state's 'langchain_messages'.
         return self._messages
-
-
 
 class StreamHandler(BaseCallbackHandler):
     def __init__(self, container: st.delta_generator.DeltaGenerator, initial_text: str = ""):
