@@ -44,10 +44,6 @@ uploaded_files = st.sidebar.file_uploader(
 if uploaded_files:
     st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
 
-# Check if uploaded_files has contents, then update session state.
-if uploaded_files:
-    st.session_state.uploaded_pdfs = [file.name for file in uploaded_files]
-
 selected_files = st.sidebar.multiselect("Select from uploaded PDFs:", st.session_state.uploaded_pdfs)
 
 openai_api_key = st.sidebar.text_input("OpenAI API Key", type="password")
@@ -105,33 +101,22 @@ class Page:
         self.page_content = page_content
         self.metadata = metadata or {}
 
-# class StreamlitChatMessageHistory(BaseChatMessageHistory):
-#     """
-#     Chat message history that stores messages in Streamlit session state.
-
-#     Args:
-#         key: The key to use in Streamlit session state for storing messages.
-#     """
-
-#     def __init__(self, key: str = "langchain_messages"):
-#         try:
-#             import streamlit as st
-#         except ImportError as e:
-#             raise ImportError(
-#                 "Unable to import streamlit, please run `pip install streamlit`."
-#             ) from e
-
-#         if key not in st.session_state:
-#             st.session_state[key] = []
-#         self._messages = st.session_state[key]
-
 class StreamlitChatMessageHistory(BaseChatMessageHistory):
     def __init__(self, key: str = "langchain_messages"):
         import streamlit as st
         
-        if key not in st.session_state:
+        # Try accessing the session state value
+        try:
+            self._messages = st.session_state[key]
+        except KeyError:
+            st.error("An unexpected error occurred. Please try again.")
+            # If the key does not exist, initialize it to an empty list.
             st.session_state[key] = []
-        self._messages = st.session_state[key]
+            self._messages = st.session_state[key]
+        
+        # if key not in st.session_state:
+        #     st.session_state[key] = []
+        # self._messages = st.session_state[key]
 
     @property
     def messages(self) -> List[BaseMessage]:
