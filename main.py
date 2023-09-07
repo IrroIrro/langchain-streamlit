@@ -104,6 +104,10 @@ class Page:
 
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory as LangChainStreamlitChatMessageHistory
 
+class LangChainStreamlitChatMessageHistory:
+    def __init__(self, key):
+        self.key = key
+        
 class StreamlitChatMessageHistory(LangChainStreamlitChatMessageHistory):
     def __init__(self, key="langchain_messages"):
         # First, ensure the base class's __init__ method is fully executed
